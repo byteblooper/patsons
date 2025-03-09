@@ -53,7 +53,8 @@ class ProductList(APIView):
             if products is None:
                 products = Product.objects.select_related('category').prefetch_related(
                     Prefetch('composition', queryset=Composition.objects.only('id', 'material')),
-                    Prefetch('images', queryset=ProductImage.objects.only('id', 'image'))
+                    Prefetch('images', queryset=ProductImage.objects.only('id', 'image')),
+                    Prefetch('sub_category', queryset=SubCategory.objects.only('id', 'name'))
                 ).all()
                 cache.set(cache_key, products, timeout=300)  # Cache for 5 minutes
             

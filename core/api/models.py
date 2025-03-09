@@ -25,6 +25,7 @@ class SubCategory(models.Model):
 
 class Category(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False, unique=True)
+    image = models.ImageField(upload_to='category_images/',null=True, blank=True)
     name = models.CharField(max_length=50)
     subcategories = models.ManyToManyField(SubCategory, related_name='categories')
     def __str__(self):
@@ -47,6 +48,14 @@ class Product(models.Model):
         on_delete=models.CASCADE, 
         related_name='products',
         db_index=True
+    )
+    sub_category = models.ForeignKey(
+        SubCategory, 
+        on_delete=models.CASCADE, 
+        related_name='products',
+        db_index=True,
+        null=True,
+        blank=True
     )
     image = models.ImageField(upload_to='product_images/')
     images = models.ManyToManyField(

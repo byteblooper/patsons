@@ -43,6 +43,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(serializers.ModelSerializer):
     composition = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
+    sub_category = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()
 
     class Meta:
@@ -62,8 +63,16 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             ]
         }
     
+    def get_sub_category(self, obj):
+        return {
+            'id': obj.sub_category.id,
+            'name': obj.sub_category.name
+        }
+    
     def get_images(self, obj):
         return [{'id': img.id, 'image': img.image.url} for img in obj.images.all()]
+    
+    
 
 class ContactUsSerializer(serializers.ModelSerializer):
     class Meta:

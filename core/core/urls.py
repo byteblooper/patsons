@@ -24,7 +24,7 @@ from debug_toolbar.toolbar import debug_toolbar_urls
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    path('api/admin/', include('admin.urls')),
+    path('api/admin/', include('admin_panel.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
