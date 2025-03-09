@@ -7,7 +7,7 @@ import {
   TrashIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { categories, fetchCategories, createCategory, updateCategory, deleteCategory } from '../../data/adminApi';
+import {  fetchCategories, createCategory, updateCategory, deleteCategory } from '../../data/adminApi';
 
 function AdminHome() {
   const navigate = useNavigate();
