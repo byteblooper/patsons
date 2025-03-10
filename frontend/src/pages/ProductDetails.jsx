@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInquiry } from "../context/InquiryContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { products as localProducts } from "../data/products";
 
 function ProductDetails() {
   const { id } = useParams();
@@ -19,36 +20,34 @@ function ProductDetails() {
   };
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await fetch(`https://patsons.pythonanywhere.com/api/products/${id}/`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch product data: ${response.statusText}`);
-        }
+    // API endpoint for future reference:
+    // const fetchProduct = async () => {
+    //   try {
+    //     const response = await fetch(`https://patsons.pythonanywhere.com/api/products/${id}/`);
+    //     if (!response.ok) {
+    //       throw new Error(`Failed to fetch product data: ${response.statusText}`);
+    //     }
+    //     const data = await response.json();
+    //     if (data.status === "success") {
+    //       setProduct(data.product);
+    //     }
+    //   } catch (error) {
+    //     console.error("Error fetching product:", error);
+    //   }
+    // };
 
-        const data = await response.json();
-        console.log("API Response:", data);
-        if (data.status === "success") {
-          const productData = {
-            ...data.product,
-            // Ensure main image URL is absolute
-            mainImage: getFullImageUrl(data.product.image),
-            // Process image URLs in the images array
-            images: (data.product.images || []).map(img => ({
-              ...img,
-              image: getFullImageUrl(img.image)
-            }))
-          };
-          console.log("Processed Product Data:", productData);
-          setProduct(productData);
-        }
-      } catch (error) {
-        console.error("Error fetching product:", error);
-      }
-    };
-
-    if (id) {
-      fetchProduct();
+    // Using local data
+    const foundProduct = localProducts.find(p => p.id === id);
+    if (foundProduct) {
+      const processedProduct = {
+        ...foundProduct,
+        mainImage: getFullImageUrl(foundProduct.images?.[0]?.image),
+        images: (foundProduct.images || []).map(img => ({
+          ...img,
+          image: getFullImageUrl(img.image)
+        }))
+      };
+      setProduct(processedProduct);
     }
   }, [id]);
 

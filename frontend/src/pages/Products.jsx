@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Filter, X } from "lucide-react";
 import CategorySection from "../components/CategorySection";
 import ProductCard from "../components/ProductCard";
+import { products as localProducts, categories as localCategories } from "../data/products";
 
 function Products() {
   const location = useLocation();
@@ -11,56 +12,66 @@ function Products() {
   const category = searchParams.get("category");
   const mainCategory = searchParams.get("main");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    materials: [],
-    categories: [],
-  });
+  const [selectedMaterials, setSelectedMaterials] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [apiProducts, setApiProducts] = useState([]);
+  const [uniqueMaterials, setUniqueMaterials] = useState([]);
 
+  // Extract unique materials and set initial products
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await fetch("https://patsons.pythonanywhere.com/api/products/");
-        const data = await response.json();
-        if (data.status === "success") {
-          setApiProducts(data.products);
-          setFilteredProducts(data.products);
+    // Get unique materials from all products
+    const materialsSet = new Set();
+    localProducts.forEach(product => {
+      product.composition?.forEach(comp => {
+        if (comp.material) {
+          materialsSet.add(comp.material.toLowerCase());
         }
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      }
-    };
-
-    fetchProducts();
+      });
+    });
+    setUniqueMaterials(Array.from(materialsSet).sort());
+    setFilteredProducts(localProducts);
   }, []);
 
-  // Filter products based on all criteria
+  // Filter products when selection changes
   useEffect(() => {
-    let result = [...apiProducts];
+    let result = [...localProducts];
 
-    if (category) {
-      result = result.filter((product) =>
-        product.category.id === category ||
-        product.category.subcategories.some(sub => sub.id === category)
-      );
-    }
-
+    // Apply category filters
     if (mainCategory) {
-      result = result.filter((product) => product.category.id === mainCategory);
+      result = result.filter(product => product.category?.id === mainCategory);
+      if (category) {
+        result = result.filter(product => product.sub_category?.id === category);
+      }
     }
 
-    if (filters.materials.length > 0) {
-      result = result.filter((product) =>
-        product.composition.some((comp) => filters.materials.includes(comp.material))
+    // Apply material filters
+    if (selectedMaterials.length > 0) {
+      result = result.filter(product =>
+        product.composition?.some(comp =>
+          selectedMaterials.includes(comp.material.toLowerCase())
+        )
       );
     }
 
     setFilteredProducts(result);
-  }, [category, mainCategory, filters, apiProducts]);
+  }, [category, mainCategory, selectedMaterials]);
 
-  const handleFilterChange = (newFilters) => {
-    setFilters(newFilters);
+  const handleMaterialChange = (material) => {
+    setSelectedMaterials(prev =>
+      prev.includes(material)
+        ? prev.filter(m => m !== material)
+        : [...prev, material]
+    );
+  };
+
+  const getCurrentCategoryName = () => {
+    if (!category && !mainCategory) return "All Products";
+    const mainCat = localCategories.find(c => c.id === mainCategory);
+    if (!category && mainCat) return mainCat.name;
+    if (category && mainCat) {
+      const subCat = mainCat.subcategories.find(s => s.id === category);
+      return subCat ? subCat.name : mainCat.name;
+    }
+    return "Products";
   };
 
   return (
@@ -72,18 +83,18 @@ function Products() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold">Products</h1>
+          <h1 className="text-2xl font-bold">{getCurrentCategoryName()}</h1>
           <p className="text-gray-600">{filteredProducts.length} products</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Filter Sidebar */}
           <aside className={`
-            lg:block fixed lg:relative inset-0 z-50 lg:z-0
+            lg:block fixed lg:relative inset-0 z-50 lg:z-0 bg-white lg:bg-transparent
             transform transition-transform duration-300 ease-in-out
             ${isFilterOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           `}>
-            <div className="h-full lg:h-auto bg-white lg:bg-transparent p-4 lg:p-0">
+            <div className="h-full lg:h-auto p-4 lg:p-0">
               <div className="flex justify-between items-center lg:hidden mb-4">
                 <h2 className="text-xl font-semibold">Filters</h2>
                 <button 
@@ -93,29 +104,31 @@ function Products() {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              
-              {/* Filter Content */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Materials</h3>
-                  <div className="space-y-2">
-                    {["Cotton", "Polyester", "Wool", "Denim", "Linen"].map((material) => (
-                      <label key={material} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={filters.materials.includes(material)}
-                          onChange={(e) => {
-                            const newMaterials = e.target.checked
-                              ? [...filters.materials, material]
-                              : filters.materials.filter((m) => m !== material);
-                            handleFilterChange({ ...filters, materials: newMaterials });
-                          }}
-                          className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
-                        />
-                        <span className="ml-2 text-gray-700">{material}</span>
-                      </label>
-                    ))}
-                  </div>
+
+              {/* Materials Filter */}
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <h3 className="text-lg font-semibold mb-4">Materials</h3>
+                <div className="space-y-3">
+                  {uniqueMaterials.map((material) => (
+                    <label key={material} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedMaterials.includes(material)}
+                        onChange={() => handleMaterialChange(material)}
+                        className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+                      />
+                      <span className="ml-2 text-gray-700 capitalize">
+                        {material}
+                        <span className="text-gray-400 text-sm ml-1">
+                          ({localProducts.filter(p => 
+                            p.composition?.some(c => 
+                              c.material.toLowerCase() === material
+                            )
+                          ).length})
+                        </span>
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
             </div>
@@ -130,7 +143,7 @@ function Products() {
                 className="text-center py-12 bg-white rounded-lg shadow-sm"
               >
                 <h3 className="text-lg font-medium text-gray-900">No products found</h3>
-                <p className="mt-2 text-sm text-gray-500">Try adjusting your filters or search criteria</p>
+                <p className="mt-2 text-sm text-gray-500">Try adjusting your filters</p>
               </motion.div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
@@ -165,17 +178,15 @@ function Products() {
       </motion.button>
 
       {/* Mobile Filter Backdrop */}
-      <AnimatePresence>
-        {isFilterOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
-            onClick={() => setIsFilterOpen(false)}
-          />
-        )}
-      </AnimatePresence>
+      {isFilterOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+          onClick={() => setIsFilterOpen(false)}
+        />
+      )}
     </div>
   );
 }

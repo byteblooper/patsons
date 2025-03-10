@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { categories as localCategories } from "../data/products";
 
 function CategorySection() {
   const location = useLocation();
@@ -14,30 +15,31 @@ function CategorySection() {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch("https://patsons.pythonanywhere.com/api/categories/");
-        const data = await response.json();
-        if (data.status === "success") {
-          const formattedCategories = data.categories.map((category) => ({
-            id: category.id,
-            name: category.name,
-            subcategories: category.subcategories.map((sub) => ({
-              id: sub.id,
-              name: sub.name,
-              slug: sub.name.toLowerCase().replace(/\s+/g, "-"),
-            })),
-          }));
-          setCategories(formattedCategories);
-        } else {
-          console.error("Failed to fetch categories");
-        }
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
+    // API endpoint for future reference:
+    // const fetchCategories = async () => {
+    //   try {
+    //     const response = await fetch("https://patsons.pythonanywhere.com/api/categories/");
+    //     const data = await response.json();
+    //     if (data.status === "success") {
+    //       const formattedCategories = data.categories.map((category) => ({
+    //         id: category.id,
+    //         name: category.name,
+    //         subcategories: category.subcategories.map((sub) => ({
+    //           id: sub.id,
+    //           name: sub.name,
+    //           slug: sub.name.toLowerCase().replace(/\s+/g, "-"),
+    //         })),
+    //       }));
+    //       setCategories(formattedCategories);
+    //     }
+    //   } catch (error) {
+    //     console.error("Error fetching categories:", error);
+    //   }
+    // };
+    // fetchCategories();
 
-    fetchCategories();
+    // Using local data
+    setCategories(localCategories);
   }, []);
 
   // Automatically expand the category if there's an active main category
@@ -49,17 +51,19 @@ function CategorySection() {
   }, [activeMainCategory]);
 
   // Handle category click to navigate to the products page with updated query parameters
-  const handleMainCategoryClick = (key, event) => {
+  const handleMainCategoryClick = (categoryId, event) => {
     if (!event.target.closest("button")) {
       // Only navigate if not clicking the expand/collapse button
-      navigate(`/products?category=${key}&main=${activeCategory || ""}`);
+      navigate(`/products?main=${categoryId}`);
+      setExpandedCategory(categoryId);
     }
   };
 
   // Handle subcategory selection to set category and main category in the URL
   const handleSubcategoryClick = (mainCategoryId, subCategoryId) => {
     // Update the URL parameters to reflect the selected subcategory
-    navigate(`/products?category=${subCategoryId}&main=${mainCategoryId}`);
+    navigate(`/products?main=${mainCategoryId}&category=${subCategoryId}`);
+    setIsCategoryExpanded(false); // Close mobile menu after selection
   };
 
   const toggleCategory = (category, event) => {
@@ -234,7 +238,7 @@ function CategorySection() {
                   </div>
                 </div>
 
-                {/* Subcategories Panel */}
+                {/* Subcategories Panel - Desktop */}
                 <AnimatePresence>
                   {expandedCategory === category.id && (
                     <motion.div
@@ -242,18 +246,18 @@ function CategorySection() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.3 }}
-                      className="overflow-hidden mt-3"
+                      className="absolute z-20 w-full bg-white rounded-lg shadow-lg mt-3 overflow-hidden"
                     >
-                      <div className="border-t divide-y divide-gray-100">
+                      <div className="divide-y divide-gray-100">
                         {category.subcategories.map((sub) => (
-                          <Link
+                          <div
                             key={sub.id}
-                            to={`/products?category=${category.id}&main=${sub.id}`}
-                            className={`block px-4 py-2.5 hover:bg-gray-100
+                            onClick={() => handleSubcategoryClick(category.id, sub.id)}
+                            className={`block px-4 py-2.5 hover:bg-gray-100 cursor-pointer
                               ${activeCategory === sub.id ? "bg-sky-50 text-sky-600 font-semibold" : ""}`}
                           >
                             {sub.name}
-                          </Link>
+                          </div>
                         ))}
                       </div>
                     </motion.div>

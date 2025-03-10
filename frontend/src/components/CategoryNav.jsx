@@ -23,7 +23,7 @@ function CategoryNav() {
           {categories.map((cat, index) => (
             <Link
               key={cat.slug}
-              to={`/products?main=${cat.slug === "mens" ? "a782ade0-7310-4152-914f-ddfee663d8ad" : "c0277e3f-6324-4c41-bb8a-6fbbf9eee579"}`}
+              to={`/products?main=${cat.slug === "mens" ? "fc171cdc-aac4-453c-96a1-4643cae42d9b" : "ladies-products"}`}
               className="block group"
             >
               <div
