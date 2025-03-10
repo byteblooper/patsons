@@ -27,7 +27,7 @@ function Home() {
           className="inline-flex gap-8"
         >
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="flex gap-8">
+            <div key={i} className="flex gap-7">
               <span className="text-lg">Premium Quality Garments</span>
               <span>•</span>
               <span className="text-lg">Trusted by Leading Brands</span>
