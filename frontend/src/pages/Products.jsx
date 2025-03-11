@@ -1,139 +1,194 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { products, categories } from '../data/products';
-import ProductCard from '../components/ProductCard';
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Filter, X } from "lucide-react";
+import CategorySection from "../components/CategorySection";
+import ProductCard from "../components/ProductCard";
+import { products as localProducts, categories as localCategories } from "../data/products";
 
 function Products() {
   const location = useLocation();
-  const [selectedComposition, setSelectedComposition] = useState([]);
-  const [expandedCategory, setExpandedCategory] = useState(null);
-  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+  const searchParams = new URLSearchParams(location.search);
+  const category = searchParams.get("category");
+  const mainCategory = searchParams.get("main");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedMaterials, setSelectedMaterials] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [uniqueMaterials, setUniqueMaterials] = useState([]);
 
-  const compositions = ['Cotton', 'Polyester', 'Wool', 'Denim', 'Linen'];
-
+  // Extract unique materials and set initial products
   useEffect(() => {
-    if (location.state?.selectedCategory) {
-      setExpandedCategory(location.state.selectedCategory);
-    }
-    if (location.state?.selectedSubcategory) {
-      setSelectedSubcategory(location.state.selectedSubcategory);
-    }
-  }, [location.state]);
+    // Get unique materials from all products
+    const materialsSet = new Set();
+    localProducts.forEach(product => {
+      product.composition?.forEach(comp => {
+        if (comp.material) {
+          materialsSet.add(comp.material.toLowerCase());
+        }
+      });
+    });
+    setUniqueMaterials(Array.from(materialsSet).sort());
+    setFilteredProducts(localProducts);
+  }, []);
 
-  const handleCompositionChange = (composition) => {
-    setSelectedComposition(prev => 
-      prev.includes(composition)
-        ? prev.filter(c => c !== composition)
-        : [...prev, composition]
+  // Filter products when selection changes
+  useEffect(() => {
+    let result = [...localProducts];
+
+    // Apply category filters
+    if (mainCategory) {
+      result = result.filter(product => product.category?.id === mainCategory);
+      if (category) {
+        result = result.filter(product => product.sub_category?.id === category);
+      }
+    }
+
+    // Apply material filters
+    if (selectedMaterials.length > 0) {
+      result = result.filter(product =>
+        product.composition?.some(comp =>
+          selectedMaterials.includes(comp.material.toLowerCase())
+        )
+      );
+    }
+
+    setFilteredProducts(result);
+  }, [category, mainCategory, selectedMaterials]);
+
+  const handleMaterialChange = (material) => {
+    setSelectedMaterials(prev =>
+      prev.includes(material)
+        ? prev.filter(m => m !== material)
+        : [...prev, material]
     );
   };
 
-  const toggleCategory = (categoryId) => {
-    setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
-  };
-
-  const handleSubcategoryClick = (subcategoryId) => {
-    setSelectedSubcategory(subcategoryId);
+  const getCurrentCategoryName = () => {
+    if (!category && !mainCategory) return "All Products";
+    const mainCat = localCategories.find(c => c.id === mainCategory);
+    if (!category && mainCat) return mainCat.name;
+    if (category && mainCat) {
+      const subCat = mainCat.subcategories.find(s => s.id === category);
+      return subCat ? subCat.name : mainCat.name;
+    }
+    return "Products";
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Shop by Category</h1>
-        
-        {/* Categories Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
-          <div className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer bg-gray-100">
-            <div className="h-48 flex items-center justify-center">
-              <span className="text-xl font-semibold text-gray-700">All Products</span>
-            </div>
-          </div>
-          
-          {categories.map((category) => (
-            <div key={category.id} className="relative">
-              <div 
-                className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => toggleCategory(category.id)}
-              >
-                <img 
-                  src={category.image} 
-                  alt={category.name}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
-                  <div className="text-white text-center">
-                    <p className="font-semibold text-sm">{category.name}</p>
-                    {expandedCategory === category.id ? (
-                      <ChevronDownIcon className="h-5 w-5 mx-auto mt-2" />
-                    ) : (
-                      <ChevronRightIcon className="h-5 w-5 mx-auto mt-2" />
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Dropdown Menu */}
-              {expandedCategory === category.id && (
-                <div className="absolute z-10 w-full mt-2 bg-white rounded-lg shadow-lg overflow-hidden">
-                  {category.subcategories.map((subcategory) => (
-                    <div
-                      key={subcategory.id}
-                      className={`px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between ${
-                        selectedSubcategory === subcategory.id ? 'bg-blue-50' : ''
-                      }`}
-                      onClick={() => handleSubcategoryClick(subcategory.id)}
-                    >
-                      <span className="text-sm text-gray-700">{subcategory.name}</span>
-                      <ChevronRightIcon className="h-4 w-4 text-gray-400" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+    <div className="min-h-screen p-14 bg-gray-50">
+      {/* Header Section */}
+      <div className="sticky top-0 z-40 bg-gray-50 shadow-sm">
+        <CategorySection />
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold">{getCurrentCategoryName()}</h1>
+          <p className="text-gray-600">{filteredProducts.length} products</p>
         </div>
 
-        <div className="flex gap-8">
-          {/* Filters Sidebar */}
-          <div className="w-64 flex-shrink-0">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-4">Composition</h2>
-              {compositions.map((composition) => (
-                <label key={composition} className="flex items-center space-x-3 mb-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedComposition.includes(composition)}
-                    onChange={() => handleCompositionChange(composition)}
-                    className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <span className="text-gray-700">{composition}</span>
-                </label>
-              ))}
-              <button 
-                onClick={() => setSelectedComposition([])}
-                className="text-sm text-gray-500 hover:text-gray-700 mt-4"
-              >
-                Clear all filters
-              </button>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Filter Sidebar */}
+          <aside className={`
+            lg:block fixed lg:relative inset-0 z-50 lg:z-0 bg-white lg:bg-transparent
+            transform transition-transform duration-300 ease-in-out
+            ${isFilterOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          `}>
+            <div className="h-full lg:h-auto p-4 lg:p-0">
+              <div className="flex justify-between items-center lg:hidden mb-4">
+                <h2 className="text-xl font-semibold">Filters</h2>
+                <button 
+                  onClick={() => setIsFilterOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
 
-          {/* Products Grid */}
-          <div className="flex-1">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-4">Products</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
+              {/* Materials Filter */}
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <h3 className="text-lg font-semibold mb-4">Materials</h3>
+                <div className="space-y-3">
+                  {uniqueMaterials.map((material) => (
+                    <label key={material} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedMaterials.includes(material)}
+                        onChange={() => handleMaterialChange(material)}
+                        className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+                      />
+                      <span className="ml-2 text-gray-700 capitalize">
+                        {material}
+                        <span className="text-gray-400 text-sm ml-1">
+                          ({localProducts.filter(p => 
+                            p.composition?.some(c => 
+                              c.material.toLowerCase() === material
+                            )
+                          ).length})
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
+          </aside>
+
+          {/* Products Grid */}
+          <div className="lg:col-span-3">
+            {filteredProducts.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-12 bg-white rounded-lg shadow-sm"
+              >
+                <h3 className="text-lg font-medium text-gray-900">No products found</h3>
+                <p className="mt-2 text-sm text-gray-500">Try adjusting your filters</p>
+              </motion.div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                <AnimatePresence>
+                  {filteredProducts.map((product, index) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      <ProductCard product={product} />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Mobile Filter Button */}
+      <motion.button
+        onClick={() => setIsFilterOpen(true)}
+        className="fixed lg:hidden right-4 bottom-20 z-30 bg-black text-white p-4 rounded-full shadow-lg"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <Filter className="w-6 h-6" />
+        <span className="sr-only">Open Filters</span>
+      </motion.button>
+
+      {/* Mobile Filter Backdrop */}
+      {isFilterOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+          onClick={() => setIsFilterOpen(false)}
+        />
+      )}
     </div>
   );
 }
 
-export default Products
+export default Products;

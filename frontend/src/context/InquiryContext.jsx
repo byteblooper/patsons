@@ -17,6 +17,10 @@ export function InquiryProvider({ children }) {
     setInquiryItems(prev => prev.filter(item => item.id !== productId));
   };
 
+  const clearInquiry = () => {
+    setInquiryItems([]);
+  };
+
   const isInInquiry = (productId) => {
     return inquiryItems.some(item => item.id === productId);
   };
@@ -26,6 +30,7 @@ export function InquiryProvider({ children }) {
       inquiryItems,
       addToInquiry,
       removeFromInquiry,
+      clearInquiry,
       isInInquiry
     }}>
       {children}

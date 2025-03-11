@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -7,7 +7,7 @@ import {
   TrashIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import {  fetchCategories, createCategory, updateCategory, deleteCategory } from '../../data/adminApi';
+import { categories } from '../../data/products';
 
 function AdminHome() {
   const navigate = useNavigate();
@@ -21,26 +21,6 @@ function AdminHome() {
     image: '',
     subcategories: []
   });
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
-  const loadCategories = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchCategories();
-      setCategories(data);
-    } catch (err) {
-      setError('Failed to load categories');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAddProduct = (categoryId) => {
     navigate(`/admin/category/${categoryId}/add-product`);
@@ -56,15 +36,11 @@ function AdminHome() {
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = async () => {
-    try {
-      await deleteCategory(selectedCategory.id);
-      await loadCategories();
-      setShowDeleteConfirm(false);
-      setSelectedCategory(null);
-    } catch (err) {
-      setError('Failed to delete category');
-    }
+  const confirmDelete = () => {
+    // Handle category deletion
+    console.log('Deleting category:', selectedCategory.id);
+    setShowDeleteConfirm(false);
+    setSelectedCategory(null);
   };
 
   const handleAddSubcategory = () => {
@@ -74,6 +50,7 @@ function AdminHome() {
         subcategories: [
           ...selectedCategory.subcategories,
           {
+            id: `${newSubcategory.toLowerCase().replace(/\s+/g, '-')}`,
             name: newSubcategory
           }
         ]
@@ -83,120 +60,19 @@ function AdminHome() {
     }
   };
 
-  const handleSaveCategory = async () => {
-    try {
-      if (!selectedCategory.name.trim()) {
-        setErrorMessage('Category name is required');
-        return;
-      }
-
-      // Prepare the update data in the format the API expects
-      const updateData = {
-        id: selectedCategory.id,
-        name: selectedCategory.name,
-        subcategories: selectedCategory.subcategories.map(sub => ({
-          name: sub.name
-        })),
-        image: null // Set to null if no new image
-      };
-
-      // If there's a new image, handle it separately with FormData
-      if (selectedCategory.image instanceof File) {
-        const formData = new FormData();
-        formData.append('image', selectedCategory.image);
-        formData.append('name', updateData.name);
-        formData.append('subcategories', JSON.stringify(updateData.subcategories));
-        formData.append('id', updateData.id);
-        
-        await updateCategory(selectedCategory.id, formData);
-      } else {
-        // If no new image, send JSON data directly
-        await updateCategory(selectedCategory.id, updateData);
-      }
-
-      await loadCategories();
-      setShowEditCategory(false);
-      setSelectedCategory(null);
-    } catch (err) {
-      setErrorMessage(err.message || 'Failed to update category');
-    }
+  const handleSaveCategory = () => {
+    // Handle saving category changes
+    console.log('Saving category:', selectedCategory);
+    setShowEditCategory(false);
+    setSelectedCategory(null);
   };
 
-  const handleCreateCategory = async () => {
-    try {
-      setErrorMessage('');
-      if (!newCategory.name.trim()) {
-        setErrorMessage('Category name is required');
-        return;
-      }
-      
-      const formData = new FormData();
-      formData.append('name', newCategory.name);
-      if (newCategory.image instanceof File) {
-        formData.append('image', newCategory.image);
-      }
-      
-      // Add empty subcategories array if none exist
-      formData.append('subcategories', JSON.stringify([]));
-      
-      await createCategory(formData);
-      await loadCategories();
-      setShowAddCategory(false);
-      setNewCategory({ name: '', image: '', subcategories: [] });
-    } catch (err) {
-      setErrorMessage(err.message || 'Failed to create category');
-    }
+  const handleCreateCategory = () => {
+    // Handle creating new category
+    console.log('Creating new category:', newCategory);
+    setShowAddCategory(false);
+    setNewCategory({ name: '', image: '', subcategories: [] });
   };
-
-  const handleImageChange = (e, isEdit = false) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (isEdit) {
-        setSelectedCategory({ ...selectedCategory, image: file });
-      } else {
-        setNewCategory({ ...newCategory, image: file });
-      }
-    }
-  };
-
-  const addCategoryModalContent = (
-    <div className="space-y-4">
-      {errorMessage && (
-        <div className="bg-red-50 text-red-500 p-3 rounded-lg">
-          {errorMessage}
-        </div>
-      )}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Category Name
-        </label>
-        <input
-          type="text"
-          value={newCategory.name}
-          onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Category Image
-        </label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleImageChange(e)}
-          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 "
-          
-        />
-      </div>
-      <button
-        onClick={handleCreateCategory}
-        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
-      >
-        Create Category
-      </button>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -222,10 +98,9 @@ function AdminHome() {
             >
               <div className="aspect-w-16 aspect-h-9">
                 <img
-                  src={`http://127.0.0.1:8000${category.image}`}
+                  src={category.image}
                   alt={category.name}
                   className="w-full h-full object-cover"
-                  
                 />
               </div>
               <div className="p-4">
@@ -284,7 +159,36 @@ function AdminHome() {
                     <XMarkIcon className="h-6 w-6 text-gray-500" />
                   </button>
                 </div>
-                {addCategoryModalContent}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newCategory.name}
+                      onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Image URL
+                    </label>
+                    <input
+                      type="text"
+                      value={newCategory.image}
+                      onChange={(e) => setNewCategory({ ...newCategory, image: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <button
+                    onClick={handleCreateCategory}
+                    className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Create Category
+                  </button>
+                </div>
               </motion.div>
             </motion.div>
           )}
@@ -322,17 +226,6 @@ function AdminHome() {
                       onChange={(e) =>
                         setSelectedCategory({ ...selectedCategory, name: e.target.value })
                       }
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category Image
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageChange(e, true)}
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
