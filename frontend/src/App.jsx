@@ -10,6 +10,7 @@ import Contact from './pages/Contact';
 import AdminHome from './pages/admin/AdminHome';
 import AddProduct from './pages/admin/AddProduct';
 import { InquiryProvider } from './context/InquiryContext';
+import CategoryWiseProducts from './pages/admin/CategoryWiseProducts';
 
 function App() {
   return (
@@ -26,7 +27,8 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/admin" element={<AdminHome />} />
-              <Route path="/admin/category/:id/add-product" element={<AddProduct />} />
+              <Route path="/admin/category/:categoryId/add-product" element={<AddProduct />} />
+              <Route path="/admin/category/:categoryId/products" element={<CategoryWiseProducts />} />
             </Routes>
           </main>
           <Footer />
