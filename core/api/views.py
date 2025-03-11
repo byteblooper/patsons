@@ -13,7 +13,8 @@ from .serializers import (
     ProductDetailSerializer, 
     CategorySerializer,
     ContactUsSerializer, 
-    InquirySerializer
+    InquirySerializer,
+    CompositionSerializer
 )
 
 from .services.email_service import EmailService
@@ -53,7 +54,7 @@ class ProductList(APIView):
             if products is None:
                 products = Product.objects.select_related('category').prefetch_related(
                     Prefetch('composition', queryset=Composition.objects.only('id', 'material')),
-                    Prefetch('images', queryset=ProductImage.objects.only('id', 'image'))
+                    Prefetch('sub_category', queryset=SubCategory.objects.only('id', 'name'))
                 ).all()
                 cache.set(cache_key, products, timeout=300)  # Cache for 5 minutes
             
@@ -128,7 +129,15 @@ class ProductDetail(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-
+class CompositionView(APIView):
+    def get(self, request):
+        compositions = Composition.objects.all()
+        serializer = CompositionSerializer(compositions, many=True)
+        return Response({
+            'status': 'success',
+            'message': 'Compositions fetched successfully',
+            'compositions': serializer.data
+        }, status=status.HTTP_200_OK)
 
 class ContactUsView(APIView):
     """
