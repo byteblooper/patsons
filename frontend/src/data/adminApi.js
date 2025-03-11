@@ -199,3 +199,138 @@ export const deleteCategory = async (categoryId) => {
     throw error;
   }
 };
+
+export const fetchCategoryProducts = async (categoryId) => {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${categoryId}`, {
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error('Failed to fetch products');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
+  }
+};
+
+export const createProduct = async (formData) => {
+  try {
+    // Debug log the FormData
+    console.log('Sending FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      if (key === 'composition') {
+        console.log('composition:', JSON.parse(value));
+      } else {
+        console.log(`${key}:`, value);
+      }
+    }
+
+    const response = await fetch('http://127.0.0.1:8000/api/admin/products/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      credentials: 'include',
+      body: formData
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      console.error('API Error Response:', responseData);
+      throw new Error(responseData.detail || responseData.error || 'Failed to create product');
+    }
+
+    return responseData;
+  } catch (error) {
+    console.error('Error in createProduct:', error);
+    throw error;
+  }
+};
+
+export const updateProduct = async (productId, formData) => {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
+      method: 'PUT',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      credentials: 'include',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to update product');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating product:', error);
+    throw error;
+  }
+};
+
+export const deleteProduct = async (productId) => {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to delete product');
+    }
+    return true;
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw error;
+  }
+};
+
+export const fetchSubcategories = async (categoryId) => {
+  if (!categoryId) {
+    throw new Error('Category ID is required');
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/subcategories/${categoryId}/`, {
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch subcategories');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching subcategories:', error);
+    throw error;
+  }
+};
+
+export const fetchCompositions = async () => {
+  try {
+    const response = await fetch('http://127.0.0.1:8000/api/compositions/', {
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error('Failed to fetch compositions');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching compositions:', error);
+    throw error;
+  }
+};

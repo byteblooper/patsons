@@ -8,10 +8,10 @@ export const products = [
       }
     ],
     images: [
-      {
-        id: "87f79599-6290-4df2-9532-6990b12cac5b",
-        image: "https://patsons.pythonanywhere.com/media/product_images/2024-07-15_1_5UJOBZK.png"
-      }
+      // {
+      //   id: "87f79599-6290-4df2-9532-6990b12cac5b",
+      //   image: "https://patsons.pythonanywhere.com/media/product_images/2024-07-15_1_5UJOBZK.png"
+      // }
     ],
     category: {
       id: "a782ade0-7310-4152-914f-ddfee663d8ad",

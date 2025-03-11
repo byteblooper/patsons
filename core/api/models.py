@@ -3,7 +3,7 @@ from uuid import uuid4
 # Create your models here.
 class ProductImage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False, unique=True)
-    image = models.ImageField(upload_to='product_images/')
+    image = models.ImageField(upload_to='product_images/',null=True, blank=True)
 
     def __str__(self):
         return str(self.image.name) if self.image else 'No Image'
@@ -47,7 +47,10 @@ class Product(models.Model):
         Category, 
         on_delete=models.CASCADE, 
         related_name='products',
-        db_index=True
+        db_index=True,
+        null=True,
+        blank=True
+
     )
     sub_category = models.ForeignKey(
         SubCategory, 
@@ -57,11 +60,12 @@ class Product(models.Model):
         null=True,
         blank=True
     )
-    image = models.ImageField(upload_to='product_images/')
+    image = models.ImageField(upload_to='product_images/',null=True, blank=True)
     images = models.ManyToManyField(
-        ProductImage, 
+        ProductImage,
         related_name='product_images',
-        db_index=True
+        db_index=True,
+        blank=True
     )
 
     def __str__(self):

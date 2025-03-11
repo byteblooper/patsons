@@ -32,13 +32,25 @@ class CompositionSerializer(serializers.ModelSerializer):
         model = Composition
         fields = '__all__'
 
+class ProductCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name']
+
+class ProductSubCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubCategory
+        fields = ['id', 'name']
+
+
 class ProductSerializer(serializers.ModelSerializer):
+    category = ProductCategorySerializer(read_only=True)
+    sub_category = ProductSubCategorySerializer(read_only=True)
     composition = CompositionSerializer(many=True, read_only=True)
-    images = ProductImageSerializer(many=True, read_only=True)
     
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ['id', 'style_number', 'image', 'category', 'sub_category', 'composition']
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     composition = serializers.SerializerMethodField()
@@ -71,7 +83,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     
     def get_images(self, obj):
         return [{'id': img.id, 'image': img.image.url} for img in obj.images.all()]
-    
+
+
     
 
 class ContactUsSerializer(serializers.ModelSerializer):
