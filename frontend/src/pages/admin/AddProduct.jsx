@@ -1,206 +1,322 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { categories } from '../../data/products';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { createProduct, fetchSubcategories, fetchCompositions } from '../../data/adminApi';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 function AddProduct() {
-  const { id: categoryId } = useParams();
   const navigate = useNavigate();
-  const category = categories.find((c) => c.id === categoryId);
-
-  const [product, setProduct] = useState({
+  const { categoryId } = useParams();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [subcategories, setSubcategories] = useState([]);
+  const [compositions, setCompositions] = useState([]);
+  const [productData, setProductData] = useState({
     style_number: '',
-    description: '',
     gauge: '',
     end: '',
     weight: '',
+    description: '',
+    category: categoryId || '',
+    sub_category: '',
     composition: [],
-    image: '',
+    image: null,
+    images: []
   });
 
-  const [newMaterial, setNewMaterial] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle product creation
-    console.log('Creating product:', product);
-    navigate('/admin');
-  };
-
-  const handleAddMaterial = () => {
-    if (newMaterial.trim()) {
-      setProduct({
-        ...product,
-        composition: [
-          ...product.composition,
-          {
-            id: Date.now().toString(),
-            material: newMaterial,
-          },
-        ],
-      });
-      setNewMaterial('');
+  useEffect(() => {
+    if (categoryId) {
+      setProductData(prev => ({
+        ...prev,
+        category: categoryId
+      }));
     }
-  };
+  }, [categoryId]);
 
-  const handleRemoveMaterial = (materialId) => {
-    setProduct({
-      ...product,
-      composition: product.composition.filter((m) => m.id !== materialId),
-    });
-  };
+  useEffect(() => {
+    console.log('Current categoryId:', categoryId);
+    console.log('Current productData:', productData);
+  }, [categoryId, productData]);
 
-  if (!category) {
+  useEffect(() => {
+    const loadData = async () => {
+      if (!categoryId) return;
+      
+      try {
+        setLoading(true);
+        const [subcategoriesData, compositionsData] = await Promise.all([
+          fetchSubcategories(categoryId),
+          fetchCompositions()
+        ]);
+        
+        console.log('Subcategories:', subcategoriesData);
+        setSubcategories(subcategoriesData);
+        setCompositions(compositionsData?.compositions || []);
+      } catch (err) {
+        setError('Failed to load form data');
+        console.error('Load data error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [categoryId]);
+
+  if (!categoryId) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-xl text-gray-600">Category not found</p>
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-red-500">Invalid category ID</p>
+          <button
+            onClick={() => navigate('/admin')}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Back to Categories
+          </button>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-2xl font-bold mb-6">Add Product to {category.name}</h1>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!productData.sub_category || productData.composition.length === 0) {
+      setError('Please select both subcategory and composition');
+      return;
+    }
+    setLoading(true);
+    setError('');
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+    try {
+      // Prepare the request data in JSON format
+      const requestData = {
+        style_number: productData.style_number,
+        gauge: productData.gauge,
+        end: productData.end,
+        weight: productData.weight,
+        description: productData.description,
+        category: productData.category,
+        sub_category: productData.sub_category,
+        composition: productData.composition,  // Send the array directly, no JSON.stringify
+        images: []
+      };
+
+      console.log('Sending data:', requestData); // Debug log to verify format
+
+      const response = await createProduct(requestData);
+      console.log('Product created successfully:', response);
+      navigate(`/admin/category/${categoryId}/products`);
+    } catch (err) {
+      console.error('Error creating product:', err);
+      setError(err.message || 'Failed to create product');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update the composition select handler
+  const handleCompositionChange = (e) => {
+    const selectedValues = Array.from(e.target.selectedOptions, option => option.value);
+    console.log('Selected composition values:', selectedValues); // Debug log
+    setProductData(prev => ({
+      ...prev,
+      composition: selectedValues
+    }));
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <button
+              onClick={() => navigate(`/admin/category/${categoryId}/products`)}
+              className="flex items-center text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeftIcon className="h-5 w-5 mr-2" />
+              Back to Products
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900 mt-2">Add New Product</h1>
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <div className="flex">
+              <div className="ml-3">
+                <p className="text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="bg-white shadow-sm rounded-lg p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Style Number
+                Style Number *
               </label>
               <input
                 type="text"
-                value={product.style_number}
-                onChange={(e) => setProduct({ ...product, style_number: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                value={productData.style_number}
+                onChange={(e) => setProductData({...productData, style_number: e.target.value})}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
+                Subcategory *
+              </label>
+              <select
+                value={productData.sub_category}
+                onChange={(e) => setProductData({...productData, sub_category: e.target.value})}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="">Select Subcategory</option>
+                {subcategories.map(sub => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name}
+                  </option>
+                ))}
+              </select>
+              {subcategories.length === 0 && !loading && (
+                <p className="text-sm text-gray-500 mt-1">
+                  No subcategories available for this category
+                </p>
+              )}
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Composition *
+              </label>
+              <select
+                multiple
+                value={productData.composition}
+                onChange={handleCompositionChange}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                size="3"
+                required
+              >
+                {compositions.map(comp => (
+                  <option key={comp.id} value={comp.id}>
+                    {comp.material}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-gray-500 mt-1">
+                Hold Ctrl/Cmd to select multiple compositions
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Gauge *
+              </label>
+              <input
+                type="text"
+                value={productData.gauge}
+                onChange={(e) => setProductData({...productData, gauge: e.target.value})}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End *
+              </label>
+              <input
+                type="text"
+                value={productData.end}
+                onChange={(e) => setProductData({...productData, end: e.target.value})}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Weight *
+              </label>
+              <input
+                type="text"
+                value={productData.weight}
+                onChange={(e) => setProductData({...productData, weight: e.target.value})}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description *
               </label>
               <textarea
-                value={product.description}
-                onChange={(e) => setProduct({ ...product, description: e.target.value })}
-                rows={3}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                value={productData.description}
+                onChange={(e) => setProductData({...productData, description: e.target.value})}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                rows="4"
                 required
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Gauge
-                </label>
-                <input
-                  type="text"
-                  value={product.gauge}
-                  onChange={(e) => setProduct({ ...product, gauge: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  End
-                </label>
-                <input
-                  type="text"
-                  value={product.end}
-                  onChange={(e) => setProduct({ ...product, end: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Weight
-                </label>
-                <input
-                  type="text"
-                  value={product.weight}
-                  onChange={(e) => setProduct({ ...product, weight: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Composition
-              </label>
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={newMaterial}
-                  onChange={(e) => setNewMaterial(e.target.value)}
-                  placeholder="Add material"
-                  className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddMaterial}
-                  className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Add
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {product.composition.map((material) => (
-                  <span
-                    key={material.id}
-                    className="px-3 py-1 bg-gray-100 rounded-full flex items-center gap-2"
-                  >
-                    {material.material}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveMaterial(material.id)}
-                      className="text-gray-500 hover:text-red-500"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Image URL
+                Main Image
               </label>
               <input
-                type="text"
-                value={product.image}
-                onChange={(e) => setProduct({ ...product, image: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
+                type="file"
+                onChange={(e) => setProductData({...productData, image: e.target.files[0]})}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                accept="image/*"
               />
             </div>
 
-            <div className="flex justify-end gap-4">
-              <button
-                type="button"
-                onClick={() => navigate('/admin')}
-                className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Create Product
-              </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Additional Images
+              </label>
+              <input
+                type="file"
+                multiple
+                onChange={(e) => setProductData({...productData, images: Array.from(e.target.files)})}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                accept="image/*"
+              />
             </div>
-          </form>
-        </div>
+          </div>
+
+          <div className="mt-8 flex justify-end">
+            <button
+              type="button"
+              onClick={() => navigate(`/admin/category/${categoryId}/products`)}
+              className="mr-4 px-6 py-2 border rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-300 flex items-center"
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Creating...
+                </>
+              ) : (
+                'Create Product'
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
