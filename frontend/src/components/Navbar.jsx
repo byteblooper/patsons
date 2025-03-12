@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Menu, X, ShoppingBag, ChevronDown } from 'lucide-react';
+import { Search, Menu, X, ShoppingBag, ChevronDown, User } from 'lucide-react';
 import { useInquiry } from '../context/InquiryContext';
 import CartPreview from './CartPreview';
 
@@ -192,6 +192,13 @@ function Navbar() {
                   {isCartOpen && <CartPreview isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />}
                 </AnimatePresence>
               </div>
+              <Link 
+                to="/login" 
+                className="p-2 hover:bg-gray-100 rounded-full flex items-center gap-2 text-sm font-medium"
+              >
+                <User className="w-5 h-5" />
+                <span className="hidden md:inline">Login</span>
+              </Link>
             </div>
           </div>
         </div>

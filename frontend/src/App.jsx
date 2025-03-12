@@ -11,6 +11,7 @@ import AdminHome from './pages/admin/AdminHome';
 import AddProduct from './pages/admin/AddProduct';
 import { InquiryProvider } from './context/InquiryContext';
 import CategoryWiseProducts from './pages/admin/CategoryWiseProducts';
+import Login from './pages/Login';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
               <Route path="/inquiry" element={<Inquiry />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/login" element={<Login />} />
               <Route path="/admin" element={<AdminHome />} />
               <Route path="/admin/category/:categoryId/add-product" element={<AddProduct />} />
               <Route path="/admin/category/:categoryId/products" element={<CategoryWiseProducts />} />
