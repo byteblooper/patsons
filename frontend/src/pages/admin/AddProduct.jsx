@@ -88,41 +88,23 @@ function AddProduct() {
     setError('');
 
     try {
-      const formData = new FormData();
+      // Prepare the request data in JSON format
+      const requestData = {
+        style_number: productData.style_number,
+        gauge: productData.gauge,
+        end: productData.end,
+        weight: productData.weight,
+        description: productData.description,
+        category: productData.category,
+        sub_category: productData.sub_category,
+        composition: productData.composition,  // Send the array directly, no JSON.stringify
+        images: []
+      };
 
-      // Add basic fields
-      formData.append('style_number', productData.style_number);
-      formData.append('gauge', productData.gauge);
-      formData.append('end', productData.end);
-      formData.append('weight', productData.weight);
-      formData.append('description', productData.description);
-      formData.append('category', productData.category);
-      formData.append('sub_category', productData.sub_category);
+      console.log('Sending data:', requestData); // Debug log to verify format
 
-      // Handle composition - send as a simple array of UUIDs
-      formData.append('composition', JSON.stringify(productData.composition));
-
-      // Add main image if exists
-      if (productData.image) {
-        formData.append('image', productData.image);
-      }
-
-      // Add additional images if they exist
-      if (productData.images.length > 0) {
-        Array.from(productData.images).forEach(image => {
-          formData.append('images', image);
-        });
-      }
-
-      // Debug logging
-      console.log('Sending data:', {
-        ...productData,
-        composition: productData.composition
-      });
-
-      const response = await createProduct(formData);
-      console.log('API Response:', response);
-      
+      const response = await createProduct(requestData);
+      console.log('Product created successfully:', response);
       navigate(`/admin/category/${categoryId}/products`);
     } catch (err) {
       console.error('Error creating product:', err);
@@ -135,9 +117,10 @@ function AddProduct() {
   // Update the composition select handler
   const handleCompositionChange = (e) => {
     const selectedValues = Array.from(e.target.selectedOptions, option => option.value);
+    console.log('Selected composition values:', selectedValues); // Debug log
     setProductData(prev => ({
       ...prev,
-      composition: selectedValues // Store as simple array of UUIDs
+      composition: selectedValues
     }));
   };
 

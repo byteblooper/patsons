@@ -147,11 +147,9 @@ class ProductView(APIView):
     
     def post(self, request):
         try:
-            # Handle composition data if it's a string
-            if 'composition' in request.data and isinstance(request.data['composition'], str):
-                request.data._mutable = True
-                request.data['composition'] = json.loads(request.data['composition'])
-                request.data._mutable = False
+            # Debug log the incoming request
+            print("Request content type:", request.content_type)
+            print("Request data:", request.data)
 
             serializer = AdminProductSerializer(
                 data=request.data,
