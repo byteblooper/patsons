@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createProduct, fetchSubcategories, fetchCompositions } from '../../data/adminApi';
+import { createProduct, fetchSubcategories, fetchCompositions, getCookie } from '../../data/adminApi';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 function AddProduct() {
@@ -22,6 +22,10 @@ function AddProduct() {
     image: null,
     images: []
   });
+
+  // Image preview state
+  const [mainImagePreview, setMainImagePreview] = useState(null);
+  const [additionalImagePreviews, setAdditionalImagePreviews] = useState([]);
 
   useEffect(() => {
     if (categoryId) {
@@ -88,23 +92,58 @@ function AddProduct() {
     setError('');
 
     try {
-      // Prepare the request data in JSON format
-      const requestData = {
-        style_number: productData.style_number,
-        gauge: productData.gauge,
-        end: productData.end,
-        weight: productData.weight,
-        description: productData.description,
-        category: productData.category,
-        sub_category: productData.sub_category,
-        composition: productData.composition,  // Send the array directly, no JSON.stringify
-        images: []
-      };
+      const formData = new FormData();
 
-      console.log('Sending data:', requestData); // Debug log to verify format
+      // Keep existing basic fields
+      formData.append('style_number', productData.style_number);
+      formData.append('gauge', productData.gauge);
+      formData.append('end', productData.end);
+      formData.append('weight', productData.weight);
+      formData.append('description', productData.description);
+      formData.append('category', productData.category);
+      formData.append('sub_category', productData.sub_category);
 
-      const response = await createProduct(requestData);
-      console.log('Product created successfully:', response);
+      // Keep existing composition handling
+      if (productData.composition.length > 0) {
+        productData.composition.forEach(comp => {
+          formData.append('composition', comp);
+        });
+      }
+
+      // Handle main image
+      if (productData.image) {
+        formData.append('image', productData.image);
+      }
+
+      // Modified: Handle multiple images in the required nested format
+      if (productData.images && productData.images.length > 0) {
+        // First, append each image file directly
+        productData.images.forEach((file, index) => {
+          formData.append(`images[${index}]image`, file);
+        });
+      }
+
+      // Debug log
+      console.log('Sending form data:');
+      for (let pair of formData.entries()) {
+        console.log(pair[0], ':', pair[1]);
+      }
+
+      const response = await fetch('http://127.0.0.1:8000/api/admin/products/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        credentials: 'include',
+        body: formData
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create product');
+      }
+
+      console.log('Product created successfully:', data);
       navigate(`/admin/category/${categoryId}/products`);
     } catch (err) {
       console.error('Error creating product:', err);
@@ -122,6 +161,32 @@ function AddProduct() {
       ...prev,
       composition: selectedValues
     }));
+  };
+
+  // Updated image handlers with previews
+  const handleMainImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProductData(prev => ({
+        ...prev,
+        image: file
+      }));
+      // Create preview URL
+      setMainImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleAdditionalImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      setProductData(prev => ({
+        ...prev,
+        images: files
+      }));
+      // Create preview URLs
+      const previewUrls = files.map(file => URL.createObjectURL(file));
+      setAdditionalImagePreviews(previewUrls);
+    }
   };
 
   return (
@@ -264,29 +329,52 @@ function AddProduct() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Main Image
-              </label>
-              <input
-                type="file"
-                onChange={(e) => setProductData({...productData, image: e.target.files[0]})}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                accept="image/*"
-              />
-            </div>
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Main Image
+                </label>
+                <input
+                  type="file"
+                  onChange={handleMainImageChange}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  accept="image/*"
+                />
+                {mainImagePreview && (
+                  <div className="mt-2">
+                    <img 
+                      src={mainImagePreview} 
+                      alt="Main preview" 
+                      className="h-32 w-32 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Additional Images
-              </label>
-              <input
-                type="file"
-                multiple
-                onChange={(e) => setProductData({...productData, images: Array.from(e.target.files)})}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                accept="image/*"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Additional Images
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleAdditionalImagesChange}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  accept="image/*"
+                />
+                {additionalImagePreviews.length > 0 && (
+                  <div className="mt-2 flex gap-2 overflow-x-auto">
+                    {additionalImagePreviews.map((preview, index) => (
+                      <img 
+                        key={index}
+                        src={preview} 
+                        alt={`Preview ${index + 1}`}
+                        className="h-32 w-32 object-cover rounded-lg"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
