@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Menu, X, ShoppingBag, ChevronDown } from 'lucide-react';
+import { Search, Menu, X, ShoppingBag, ChevronDown, User } from 'lucide-react';
 import { useInquiry } from '../context/InquiryContext';
 import CartPreview from './CartPreview';
 
@@ -237,6 +237,7 @@ function Navbar() {
                   </Link>
                 )}
               </div>
+
             </div>
           </div>
         </div>
