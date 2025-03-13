@@ -94,7 +94,7 @@ function AddProduct() {
     try {
       const formData = new FormData();
 
-      // Keep existing basic fields
+      // Add basic text fields
       formData.append('style_number', productData.style_number);
       formData.append('gauge', productData.gauge);
       formData.append('end', productData.end);
@@ -103,7 +103,7 @@ function AddProduct() {
       formData.append('category', productData.category);
       formData.append('sub_category', productData.sub_category);
 
-      // Keep existing composition handling
+      // Handle composition array
       if (productData.composition.length > 0) {
         productData.composition.forEach(comp => {
           formData.append('composition', comp);
@@ -115,23 +115,18 @@ function AddProduct() {
         formData.append('image', productData.image);
       }
 
-      // Modified: Handle multiple images in the required nested format
+      // Handle multiple images
       if (productData.images && productData.images.length > 0) {
-        // First, append each image file directly
         productData.images.forEach((file, index) => {
           formData.append(`images[${index}]image`, file);
         });
       }
 
-      // Debug log
-      console.log('Sending form data:');
-      for (let pair of formData.entries()) {
-        console.log(pair[0], ':', pair[1]);
-      }
-
+      // Send the request with authorization header
       const response = await fetch('http://127.0.0.1:8000/api/admin/products/', {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'X-CSRFToken': getCookie('csrftoken'),
         },
         credentials: 'include',
@@ -139,8 +134,9 @@ function AddProduct() {
       });
 
       const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create product');
+        throw new Error(data.detail || data.error || 'Failed to create product');
       }
 
       console.log('Product created successfully:', data);
