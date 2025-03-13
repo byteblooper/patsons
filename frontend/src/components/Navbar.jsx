@@ -52,6 +52,8 @@ function Navbar() {
   const cartCount = inquiryItems.length;
   const [isProductsOpen, setIsProductsOpen] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isLoggedIn = localStorage.getItem('access_token');
 
   // Handle search
   useEffect(() => {
@@ -85,13 +87,42 @@ function Navbar() {
     fetchCategories();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      const refresh_token = localStorage.getItem('refresh_token');
+      
+      const response = await fetch('http://127.0.0.1:8000/api/accounts/logout/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify({ refresh: refresh_token }),
+      });
+
+      if (response.ok) {
+        // Clear tokens from localStorage
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        
+        // Redirect to home page
+        navigate('/');
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   return (
     <>
       <div className="bg-white fixed border-b-[0.1rem] border-gray-200 w-full top-0 z-50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Mobile menu button */}
-            <button onClick={() => setIsMenuOpen(true)} className="lg:hidden p-2 hover:bg-gray-100 rounded-full">
+            <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 hover:bg-gray-100 rounded-full">
               <Menu className="w-6 h-6" />
             </button>
 
@@ -192,13 +223,21 @@ function Navbar() {
                   {isCartOpen && <CartPreview isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />}
                 </AnimatePresence>
               </div>
-              <Link 
-                to="/login" 
-                className="p-2 hover:bg-gray-100 rounded-full flex items-center gap-2 text-sm font-medium"
-              >
-                <User className="w-5 h-5" />
-                <span className="hidden md:inline">Login</span>
-              </Link>
+              <div className="hidden lg:flex lg:flex-1 lg:justify-end">
+                {isLoggedIn ? (
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-700"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <Link to="/admin" className="text-sm font-semibold leading-6 text-gray-900">
+                    Admin Login
+                  </Link>
+                )}
+              </div>
+
             </div>
           </div>
         </div>
@@ -206,7 +245,7 @@ function Navbar() {
 
       {/* Mobile menu */}
       <AnimatePresence>
-        {isMenuOpen && (
+        {mobileMenuOpen && (
           <motion.div
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
@@ -215,7 +254,7 @@ function Navbar() {
           >
             <div className="flex justify-between items-center p-4 border-b">
               <h2 className="text-lg font-semibold">Menu</h2>
-              <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+              <button onClick={() => setMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -225,11 +264,32 @@ function Navbar() {
                   key={route.path}
                   to={route.path}
                   className="block py-3 text-lg hover:text-sky-600"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => setMobileMenuOpen(false)}
                 >
                   {route.name}
                 </Link>
               ))}
+              <div className="border-t border-gray-200 mt-4 pt-4">
+                {isLoggedIn ? (
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="block w-full text-left py-3 text-lg hover:text-sky-600"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <Link
+                    to="/admin"
+                    className="block py-3 text-lg hover:text-sky-600"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Admin Login
+                  </Link>
+                )}
+              </div>
             </nav>
           </motion.div>
         )}

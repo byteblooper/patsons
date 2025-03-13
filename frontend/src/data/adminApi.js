@@ -13,12 +13,20 @@ export function getCookie(name) {
   return cookieValue;
 }
 
+// Add a helper function to get headers with authorization
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('access_token');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+    'X-CSRFToken': getCookie('csrftoken'),
+  };
+};
+
 export const fetchCategories = async () => {
   try {
     const response = await fetch('http://127.0.0.1:8000/api/admin/categories/', {
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
+      headers: getAuthHeaders(),
       credentials: 'include',
     });
     if (!response.ok) throw new Error('Failed to fetch categories');
@@ -34,6 +42,7 @@ export const createCategory = async (formData) => {
     const response = await fetch('http://127.0.0.1:8000/api/admin/categories/', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
         'X-CSRFToken': getCookie('csrftoken'),
       },
       credentials: 'include',
@@ -63,6 +72,7 @@ export const createCategory = async (formData) => {
 export const updateCategory = async (categoryId, data) => {
   try {
     const headers = {
+      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
       'X-CSRFToken': getCookie('csrftoken'),
     };
 
@@ -94,9 +104,7 @@ export const deleteCategory = async (categoryId) => {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/admin/categories/${categoryId}/`, {
       method: 'DELETE',
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
+      headers: getAuthHeaders(),
       credentials: 'include',
     });
     if (!response.ok) {
@@ -113,9 +121,7 @@ export const deleteCategory = async (categoryId) => {
 export const fetchCategoryProducts = async (categoryId) => {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/admin/categorised-products/${categoryId}`, {
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
+      headers: getAuthHeaders(),
       credentials: 'include',
     });
     if (!response.ok) throw new Error('Failed to fetch products');
@@ -128,19 +134,24 @@ export const fetchCategoryProducts = async (categoryId) => {
 
 export const createProduct = async (data) => {
   try {
-    console.log('Sending data:', data);
+    // If data is FormData, don't include Content-Type header
+    const headers = {
+      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'X-CSRFToken': getCookie('csrftoken'),
+    };
+
+    // Only add Content-Type if not sending FormData
+    if (!(data instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+      data = JSON.stringify(data);
+    }
 
     const response = await fetch('http://127.0.0.1:8000/api/admin/products/', {
       method: 'POST',
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-        'Content-Type': 'application/json'
-      },
+      headers: headers,
       credentials: 'include',
-      body: JSON.stringify(data)
+      body: data
     });
-
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
     const responseData = await response.json();
 
@@ -158,11 +169,14 @@ export const createProduct = async (data) => {
 
 export const updateProduct = async (productId, formData) => {
   try {
+    const headers = {
+      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'X-CSRFToken': getCookie('csrftoken'),
+    };
+
     const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
       method: 'PUT',
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
+      headers: headers,
       credentials: 'include',
       body: formData
     });
@@ -182,9 +196,7 @@ export const deleteProduct = async (productId) => {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
       method: 'DELETE',
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
+      headers: getAuthHeaders(),
       credentials: 'include',
     });
 
@@ -206,9 +218,7 @@ export const fetchSubcategories = async (categoryId) => {
 
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/admin/subcategories/${categoryId}/`, {
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
+      headers: getAuthHeaders(),
       credentials: 'include',
     });
     
@@ -227,9 +237,7 @@ export const fetchSubcategories = async (categoryId) => {
 export const fetchCompositions = async () => {
   try {
     const response = await fetch('http://127.0.0.1:8000/api/compositions/', {
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
+      headers: getAuthHeaders(),
       credentials: 'include',
     });
     if (!response.ok) throw new Error('Failed to fetch compositions');
