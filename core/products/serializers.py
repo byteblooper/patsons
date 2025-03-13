@@ -1,51 +1,14 @@
 from rest_framework import serializers
-from api.models import Category, Product, SubCategory, ProductImage, Composition
-from api.serializers import ProductImageSerializer, ProductSerializer, CategorySerializer, SubCategorySerializer, CompositionSerializer
-
-class AdminSubCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SubCategory
-        fields = ['id', 'name']  # Only include necessary fields
-
-class AdminCategorySerializer(serializers.ModelSerializer):
-    subcategories = AdminSubCategorySerializer(many=True, required=False)
-
-    class Meta:
-        model = Category
-        fields = '__all__'
-
-    def create(self, validated_data):
-        subcategories_data = validated_data.pop('subcategories', [])
-        category = Category.objects.create(**validated_data)
-        
-        for subcategory_data in subcategories_data:
-            subcategory = SubCategory.objects.create(**subcategory_data)
-            category.subcategories.add(subcategory)
-        
-        return category
-
-    def update(self, instance, validated_data):
-        subcategories_data = validated_data.pop('subcategories', [])
-        instance.name = validated_data.get('name', instance.name)
-        if 'image' in validated_data:
-            instance.image = validated_data.get('image')
-        instance.save()
-
-        # Clear existing subcategories and add new ones
-        instance.subcategories.clear()
-        for subcategory_data in subcategories_data:
-            subcategory = SubCategory.objects.create(**subcategory_data)
-            instance.subcategories.add(subcategory)
-
-        return instance
+from api.models import Product, ProductImage, Category, SubCategory, Composition
 
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
-        fields = ['id', 'image']  # Only include necessary fields
+        fields = ['id', 'image']
 
 
-class AdminProductSerializer(serializers.ModelSerializer):
+
+class ProductSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False)
     images = ProductImageSerializer(many=True, required=False)
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=False)

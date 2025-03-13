@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'api',
     'debug_toolbar',
+    'products',
     
 ]
 
@@ -210,3 +211,4 @@ LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)
 
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB

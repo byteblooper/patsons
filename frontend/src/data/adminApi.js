@@ -112,7 +112,7 @@ export const deleteCategory = async (categoryId) => {
 
 export const fetchCategoryProducts = async (categoryId) => {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${categoryId}`, {
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/categorised-products/${categoryId}`, {
       headers: {
         'X-CSRFToken': getCookie('csrftoken'),
       },
