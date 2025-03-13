@@ -7,6 +7,12 @@ class AdminSubCategorySerializer(serializers.ModelSerializer):
         model = SubCategory
         fields = ['id', 'name']  # Only include necessary fields
 
+class CompositionSeriallizer(serializers.ModelSerializer):
+    class Meta:
+        model = Composition
+        fields ='__all__'
+
+
 class AdminCategorySerializer(serializers.ModelSerializer):
     subcategories = AdminSubCategorySerializer(many=True, required=False)
 
