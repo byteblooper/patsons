@@ -12,7 +12,7 @@ import AddProduct from './pages/admin/AddProduct';
 import Login from './pages/admin/Login';
 import { InquiryProvider } from './context/InquiryContext';
 import CategoryWiseProducts from './pages/admin/CategoryWiseProducts';
-import Login from './pages/Login';
+// import Login from './pages/Login';
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
