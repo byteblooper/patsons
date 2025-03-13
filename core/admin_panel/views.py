@@ -39,8 +39,8 @@ class CategoryView(APIView):
     - PUT: Update an existing category by ID.
     - DELETE: Delete a category by ID.
     """
+    permission_classes = [permissions.IsAuthenticated]
 
-    # permission_classes = [permissions.IsAuthenticated]
 
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
@@ -124,7 +124,13 @@ class CategoryView(APIView):
         try:
             category = Category.objects.get(pk=pk)
             category.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                {
+                    'status': True,
+                    'message': 'Category deleted successfully',
+                },
+                status=status.HTTP_204_NO_CONTENT
+            )
         except Category.DoesNotExist:
             return Response({'error': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -155,6 +161,7 @@ class ProductListCreate(APIView):
                 ]
     }
     """
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request,pk=None):
         if pk:
             products = Product.objects.filter(category_id=pk)
@@ -172,6 +179,7 @@ class ProductListCreate(APIView):
 
 
 class ProductDetail(APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def get_object(self, pk):
         try:
             return Product.objects.get(pk=pk)
