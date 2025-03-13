@@ -134,25 +134,26 @@ class CategoryView(APIView):
 
 class ProductListCreate(APIView):
     """
-{
-  "style_number": "P12345",
-  "gauge": "100",
-  "end": "round",
-  "weight": "200g",
-  "description": "High-quality product",
-  "composition": ["uuid-of-composition-1", "uuid-of-composition-2"],
-  "category": "uuid-of-category",
-  "sub_category": "uuid-of-subcategory",
-  "image": "image.jpg",
-  "images": [
-    {
-      "image": "image1.jpg"
-    },
-    {
-      "image": "image2.jpg"
+    
+        {
+            "style_number": "P12345",
+            "gauge": "100",
+            "end": "round",
+            "weight": "200g",
+            "description": "High-quality product",
+            "composition": ["uuid-of-composition-1", "uuid-of-composition-2"],
+            "category": "uuid-of-category",
+            "sub_category": "uuid-of-subcategory",
+            "image": "image.jpg",
+            "images": [
+                    {
+                        "image": "image1.jpg"
+                    },
+                    {
+                        "image": "image2.jpg"
+                    }
+                ]
     }
-  ]
-}
     """
     def get(self, request,pk=None):
         if pk:

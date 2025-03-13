@@ -23,6 +23,10 @@ function AddProduct() {
     images: []
   });
 
+  // Image preview state
+  const [mainImagePreview, setMainImagePreview] = useState(null);
+  const [additionalImagePreviews, setAdditionalImagePreviews] = useState([]);
+
   useEffect(() => {
     if (categoryId) {
       setProductData(prev => ({
@@ -90,27 +94,32 @@ function AddProduct() {
     try {
       const formData = new FormData();
 
-      // Add basic text fields
+      // Keep existing basic fields
       formData.append('style_number', productData.style_number);
       formData.append('gauge', productData.gauge);
       formData.append('end', productData.end);
       formData.append('weight', productData.weight);
       formData.append('description', productData.description);
-
-      // Add IDs directly (not as JSON)
       formData.append('category', productData.category);
       formData.append('sub_category', productData.sub_category);
-      formData.append('composition', productData.composition);
 
-      // Add main image if exists
+      // Keep existing composition handling
+      if (productData.composition.length > 0) {
+        productData.composition.forEach(comp => {
+          formData.append('composition', comp);
+        });
+      }
+
+      // Handle main image
       if (productData.image) {
         formData.append('image', productData.image);
       }
 
-      // Add additional images if they exist
+      // Modified: Handle multiple images in the required nested format
       if (productData.images && productData.images.length > 0) {
-        productData.images.forEach(image => {
-          formData.append('images', image);
+        // First, append each image file directly
+        productData.images.forEach((file, index) => {
+          formData.append(`images[${index}]image`, file);
         });
       }
 
@@ -154,7 +163,7 @@ function AddProduct() {
     }));
   };
 
-  // Image handlers
+  // Updated image handlers with previews
   const handleMainImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -162,6 +171,8 @@ function AddProduct() {
         ...prev,
         image: file
       }));
+      // Create preview URL
+      setMainImagePreview(URL.createObjectURL(file));
     }
   };
 
@@ -172,6 +183,9 @@ function AddProduct() {
         ...prev,
         images: files
       }));
+      // Create preview URLs
+      const previewUrls = files.map(file => URL.createObjectURL(file));
+      setAdditionalImagePreviews(previewUrls);
     }
   };
 
@@ -326,6 +340,15 @@ function AddProduct() {
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   accept="image/*"
                 />
+                {mainImagePreview && (
+                  <div className="mt-2">
+                    <img 
+                      src={mainImagePreview} 
+                      alt="Main preview" 
+                      className="h-32 w-32 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
@@ -339,6 +362,18 @@ function AddProduct() {
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   accept="image/*"
                 />
+                {additionalImagePreviews.length > 0 && (
+                  <div className="mt-2 flex gap-2 overflow-x-auto">
+                    {additionalImagePreviews.map((preview, index) => (
+                      <img 
+                        key={index}
+                        src={preview} 
+                        alt={`Preview ${index + 1}`}
+                        className="h-32 w-32 object-cover rounded-lg"
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
