@@ -254,4 +254,12 @@ SIMPLE_JWT = {
 
 }
 
+# Image optimization settings
+IMAGE_OPTIMIZATION = {
+    'MAX_WIDTH': 800,
+    'MAX_HEIGHT': 800,
+    'QUALITY': 80,
+    'FORMAT': 'JPEG'
+}
+
 
