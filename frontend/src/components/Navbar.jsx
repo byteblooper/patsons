@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Menu, X, ShoppingBag, ChevronDown, User } from 'lucide-react';
+import { Search, Menu, X, ShoppingBag, ChevronDown, LogOut } from 'lucide-react';
 import { useInquiry } from '../context/InquiryContext';
 import CartPreview from './CartPreview';
 
@@ -43,7 +43,6 @@ const searchProducts = [
 function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,7 +52,40 @@ function Navbar() {
   const [isProductsOpen, setIsProductsOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const isLoggedIn = localStorage.getItem('access_token');
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    // Check if user is admin by looking for access_token
+    const accessToken = localStorage.getItem('access_token');
+    setIsAdmin(!!accessToken);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      const refresh_token = localStorage.getItem('refresh_token');
+      
+      const response = await fetch('http://127.0.0.1:8000/api/accounts/logout/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify({ refresh: refresh_token }),
+      });
+
+      if (response.ok) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        setIsAdmin(false);
+        navigate('/');
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   // Handle search
   useEffect(() => {
@@ -86,35 +118,6 @@ function Navbar() {
 
     fetchCategories();
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      const refresh_token = localStorage.getItem('refresh_token');
-      
-      const response = await fetch('http://127.0.0.1:8000/api/accounts/logout/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify({ refresh: refresh_token }),
-      });
-
-      if (response.ok) {
-        // Clear tokens from localStorage
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
-        
-        // Redirect to home page
-        navigate('/');
-      } else {
-        console.error('Logout failed');
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
 
   return (
     <>
@@ -200,44 +203,59 @@ function Navbar() {
                   )}
                 </div>
               ))}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className={`
+                    relative py-2 text-sm font-medium transition-colors
+                    ${location.pathname === "/admin" ? "text-sky-600" : "text-gray-700 hover:text-sky-600"}
+                  `}
+                >
+                  Admin
+                  {location.pathname === "/admin" && (
+                    <motion.div
+                      layoutId="navbar-underline"
+                      className="absolute left-0 right-0 bottom-0 h-0.5 bg-sky-600"
+                    />
+                  )}
+                </Link>
+              )}
             </nav>
 
             {/* Right section */}
             <div className="flex items-center space-x-4">
-              <button onClick={() => setIsSearchOpen(true)} className="p-2 hover:bg-gray-100 rounded-full">
-                <Search className="w-5 h-5" />
-              </button>
-              <div className="relative">
-                <button 
-                  onClick={() => setIsCartOpen(!isCartOpen)} 
-                  className="p-2 hover:bg-gray-100 rounded-full"
-                >
-                  <ShoppingBag className="w-5 h-5" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-sky-600 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
-                      {cartCount}
-                    </span>
-                  )}
-                </button>
-                <AnimatePresence>
-                  {isCartOpen && <CartPreview isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />}
-                </AnimatePresence>
-              </div>
-              <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-                {isLoggedIn ? (
-                  <button
-                    onClick={handleLogout}
-                    className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-700"
-                  >
-                    Logout
+              {!location.pathname.startsWith('/admin') && (
+                <>
+                  <button onClick={() => setIsSearchOpen(true)} className="p-2 hover:bg-gray-100 rounded-full">
+                    <Search className="w-5 h-5" />
                   </button>
-                ) : (
-                  <Link to="/admin" className="text-sm font-semibold leading-6 text-gray-900">
-                    Admin Login
-                  </Link>
-                )}
-              </div>
-
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsCartOpen(!isCartOpen)} 
+                      className="p-2 hover:bg-gray-100 rounded-full"
+                    >
+                      <ShoppingBag className="w-5 h-5" />
+                      {cartCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-sky-600 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                          {cartCount}
+                        </span>
+                      )}
+                    </button>
+                    <AnimatePresence>
+                      {isCartOpen && <CartPreview isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />}
+                    </AnimatePresence>
+                  </div>
+                </>
+              )}
+              {isAdmin && location.pathname.startsWith('/admin') && (
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -269,27 +287,26 @@ function Navbar() {
                   {route.name}
                 </Link>
               ))}
-              <div className="border-t border-gray-200 mt-4 pt-4">
-                {isLoggedIn ? (
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="block w-full text-left py-3 text-lg hover:text-sky-600"
-                  >
-                    Logout
-                  </button>
-                ) : (
-                  <Link
-                    to="/admin"
-                    className="block py-3 text-lg hover:text-sky-600"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Admin Login
-                  </Link>
-                )}
-              </div>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="block py-3 text-lg hover:text-sky-600"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Admin
+                </Link>
+              )}
+              {isAdmin && location.pathname.startsWith('/admin') && (
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left py-3 text-lg text-red-600 hover:text-red-700"
+                >
+                  Logout
+                </button>
+              )}
             </nav>
           </motion.div>
         )}
