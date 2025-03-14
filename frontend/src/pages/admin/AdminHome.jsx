@@ -325,8 +325,8 @@ function AdminHome() {
   };
 
   const handleEditProduct = (product) => {
-    setSelectedProduct(product);
-    setShowEditProduct(true);
+    // Navigate to edit product page with product ID
+    navigate(`/admin/category/${product.category}/edit-product/${product.id}`);
   };
 
   const handleDeleteProduct = (product) => {

@@ -324,7 +324,6 @@ class ProductDetail(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(
-            {'message': 'Product updated successfully'},
             serializer.errors, status=status.HTTP_400_BAD_REQUEST
         )
 
