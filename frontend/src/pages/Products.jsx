@@ -146,95 +146,98 @@ function Products() {
   };
 
   return (
-    <div className="min-h-screen p-14 bg-gray-50">
-      {/* Header Section */}
-      <div className="sticky top-0 z-40 bg-gray-50 shadow-sm">
-        <CategorySection categories={categories} />
+    <div className="h-screen flex flex-col bg-gray-50">
+      {/* Fixed Header */}
+      <div className="flex-none px-5 bg-gray-50">
+        <CategorySection />
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold">{getCurrentCategoryName()}</h1>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              <Filter className="w-4 h-4" />
-              Filter
-            </button>
-            <p className="text-gray-600">{filteredProducts.length} products</p>
-          </div>
-        </div>
-
-        {error ? (
-          <div className="text-center py-8">
-            <p className="text-red-500">{error}</p>
-          </div>
-        ) : loading ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Loading products...</p>
-          </div>
-        ) : (
-          <div className="flex gap-6">
-            {/* Filter Sidebar */}
-            <aside className={`
-              fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
-              lg:relative lg:translate-x-0 lg:w-64 lg:shadow-none
-              ${isFilterOpen ? "translate-x-0" : "-translate-x-full"}
-            `}>
-              <div className="h-full overflow-auto p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-lg font-semibold">Filters</h2>
-                  <button 
-                    onClick={() => setIsFilterOpen(false)}
-                    className="lg:hidden p-2 hover:bg-gray-100 rounded-full"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Materials Filter */}
-                {uniqueMaterials.length > 0 && (
-                  <div>
-                    <h3 className="font-medium mb-4">Materials</h3>
-                    <div className="space-y-3">
-                      {uniqueMaterials.map((material) => (
-                        <label key={material} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={selectedMaterials.includes(material)}
-                            onChange={() => handleMaterialChange(material)}
-                            className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
-                          />
-                          <span className="ml-2 text-gray-700 capitalize">
-                            {material}
-                            <span className="text-gray-400 text-sm ml-1">
-                              ({products.filter(p => 
-                                p.composition?.some(c => 
-                                  c.material.toLowerCase() === material
-                                )
-                              ).length})
-                            </span>
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
+      {/* Main Content */}
+      <div className="flex-1 mt-3 overflow-hidden">
+        <div className="h-full flex">
+          {/* Fixed Filter Sidebar */}
+          <aside className={`
+            fixed inset-y-0 left-0 z-40 w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+            lg:relative lg:translate-x-0 lg:w-64 lg:shadow-none lg:flex-none
+            ${isFilterOpen ? "translate-x-0" : "-translate-x-full"}
+          `}>
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold">Filters</h2>
+                <button 
+                  onClick={() => setIsFilterOpen(false)}
+                  className="lg:hidden p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-            </aside>
 
-            {/* Products Grid */}
-            <div className="flex-1">
+              {/* Materials Filter */}
+              {uniqueMaterials.length > 0 && (
+                <div>
+                  <h3 className="font-medium mb-4">Compositions</h3>
+                  <div className="space-y-3">
+                    {uniqueMaterials.map((material) => (
+                      <label key={material} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedMaterials.includes(material)}
+                          onChange={() => handleMaterialChange(material)}
+                          className="rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+                        />
+                        <span className="ml-2 text-gray-700 capitalize">
+                          {material}
+                          <span className="text-gray-400 text-sm ml-1">
+                            ({products.filter(p => 
+                              p.composition?.some(c => 
+                                c.material.toLowerCase() === material
+                              )
+                            ).length})
+                          </span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </aside>
+
+          {/* Scrollable Products Section */}
+          <main className="flex-1 overflow-y-auto p-6">
+            {/* Title and Filter Toggle */}
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold">{getCurrentCategoryName()}</h1>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className="flex items-center md:hidden gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  <Filter className="w-4 h-4" />
+                  Filter
+                </button>
+                <p className="text-gray-600">{filteredProducts.length} products</p>
+              </div>
+            </div>
+
+            {/* Products Content */}
+            {error ? (
+              <div className="text-center py-8">
+                <p className="text-red-500">{error}</p>
+              </div>
+            ) : loading ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Loading products...</p>
+              </div>
+            ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
-            </div>
-          </div>
-        )}
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );

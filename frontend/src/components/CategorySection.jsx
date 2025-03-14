@@ -202,7 +202,7 @@ function CategorySection() {
       {/* Desktop View */}
       <div className="hidden md:block bg-transparent">
         <div className="container mx-auto">
-          <h2 className="text-2xl font-bold mb-6">Shop by Category</h2>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             {/* All Products Category */}
             <div className="relative">

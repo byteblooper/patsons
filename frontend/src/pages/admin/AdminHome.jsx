@@ -79,10 +79,32 @@ function AdminHome() {
   const loadCompositions = async () => {
     try {
       setLoading(true);
-      const data = await fetchCompositions();
-      setCompositions(data.compositions || []);
+      const response = await fetch('http://127.0.0.1:8000/api/admin/compositions/', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load compositions');
+      }
+
+      const responseData = await response.json();
+      console.log('Raw compositions response:', responseData);
+      
+      // Extract compositions from the data array in the response
+      if (responseData && responseData.data && Array.isArray(responseData.data)) {
+        setCompositions(responseData.data);
+      } else {
+        setCompositions([]);
+        console.error('Unexpected compositions data format:', responseData);
+      }
     } catch (err) {
+      console.error('Error loading compositions:', err);
       setError('Failed to load compositions');
+      setCompositions([]); // Ensure compositions is always an array
     } finally {
       setLoading(false);
     }
