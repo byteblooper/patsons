@@ -23,9 +23,11 @@ import {
   updateProduct,
   deleteProduct
 } from '../../data/adminApi';
+import { useAuth } from '../../hooks/useAuth';
 
 function AdminHome() {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('categories');
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showEditCategory, setShowEditCategory] = useState(false);
@@ -371,6 +373,14 @@ function AdminHome() {
       setErrorMessage(error.message || 'Failed to update product');
     }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return null; // ProtectedRoute will handle redirect
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
