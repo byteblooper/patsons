@@ -13,13 +13,19 @@ import Login from './pages/admin/Login';
 import { InquiryProvider } from './context/InquiryContext';
 import CategoryWiseProducts from './pages/admin/CategoryWiseProducts';
 import EditProduct from './pages/admin/EditProduct';
+import { isTokenExpired } from './utils/auth';
 // import Login from './pages/Login';
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('access_token');
+  const token = localStorage.getItem('access_token');
   
-  if (!isAuthenticated) {
+  if (!token || isTokenExpired(token)) {
+    // Clear auth data
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    
     return <Navigate to="/admin/login" replace />;
   }
 

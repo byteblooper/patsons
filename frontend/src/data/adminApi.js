@@ -1,3 +1,5 @@
+import { getValidToken, handleUnauthorizedResponse } from '../utils/auth';
+
 export function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {
@@ -15,7 +17,9 @@ export function getCookie(name) {
 
 // Add a helper function to get headers with authorization
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('access_token');
+  const token = getValidToken();
+  if (!token) return null;
+
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`,
@@ -25,10 +29,19 @@ const getAuthHeaders = () => {
 
 export const fetchCategories = async () => {
   try {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
     const response = await fetch('http://127.0.0.1:8000/api/admin/categories/', {
-      headers: getAuthHeaders(),
+      headers,
       credentials: 'include',
     });
+    
+    if (response.status === 401) {
+      handleUnauthorizedResponse({ response });
+      return;
+    }
+    
     if (!response.ok) throw new Error('Failed to fetch categories');
     return await response.json();
   } catch (error) {
