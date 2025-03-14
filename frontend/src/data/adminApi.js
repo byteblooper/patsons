@@ -120,14 +120,30 @@ export const deleteCategory = async (categoryId) => {
 
 export const fetchCategoryProducts = async (categoryId) => {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/admin/categorised-products/${categoryId}`, {
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/categorised-products/${categoryId}/`, {
+      method: 'GET',
       headers: getAuthHeaders(),
-      credentials: 'include',
+      credentials: 'include'
     });
-    if (!response.ok) throw new Error('Failed to fetch products');
-    return await response.json();
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to fetch products');
+    }
+
+    const data = await response.json();
+    console.log('API Response:', data); // Debug log
+    
+    // Check if data is an array directly or has a products property
+    if (Array.isArray(data)) {
+      return data;
+    } else if (data.products && Array.isArray(data.products)) {
+      return data.products;
+    } else {
+      throw new Error('Invalid response format');
+    }
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error('Error fetching category products:', error);
     throw error;
   }
 };
@@ -167,25 +183,39 @@ export const createProduct = async (data) => {
   }
 };
 
-export const updateProduct = async (productId, formData) => {
+export const updateProduct = async (productId, productData) => {
   try {
-    const headers = {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-      'X-CSRFToken': getCookie('csrftoken'),
-    };
+    const formData = new FormData();
+    
+    // Append all product data to formData
+    Object.keys(productData).forEach(key => {
+      if (key === 'image' && productData[key] instanceof File) {
+        formData.append('image', productData[key]);
+      } else if (key === 'images' && Array.isArray(productData[key])) {
+        productData[key].forEach((file, index) => {
+          formData.append(`images[${index}]`, file);
+        });
+      } else {
+        formData.append(key, productData[key]);
+      }
+    });
 
     const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
       method: 'PUT',
-      headers: headers,
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
       credentials: 'include',
       body: formData
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Failed to update product');
+      throw new Error('Failed to update product');
     }
-    return await response.json();
+
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error('Error updating product:', error);
     throw error;
@@ -196,14 +226,17 @@ export const deleteProduct = async (productId) => {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
-      credentials: 'include',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      credentials: 'include'
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Failed to delete product');
+      throw new Error('Failed to delete product');
     }
+
     return true;
   } catch (error) {
     console.error('Error deleting product:', error);
@@ -244,6 +277,59 @@ export const fetchCompositions = async () => {
     return await response.json();
   } catch (error) {
     console.error('Error fetching compositions:', error);
+    throw error;
+  }
+};
+
+export const createComposition = async (data) => {
+  try {
+    const response = await fetch('http://127.0.0.1:8000/api/admin/compositions/', {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create composition');
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating composition:', error);
+    throw error;
+  }
+};
+
+export const updateComposition = async (id, data) => {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/compositions/${id}/`, {
+      method: 'PUT',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update composition');
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating composition:', error);
+    throw error;
+  }
+};
+
+export const deleteComposition = async (id) => {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/compositions/${id}/`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error('Failed to delete composition');
+    return true;
+  } catch (error) {
+    console.error('Error deleting composition:', error);
     throw error;
   }
 };
