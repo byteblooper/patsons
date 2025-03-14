@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createProduct, fetchSubcategories, fetchCompositions, getCookie } from '../../data/adminApi';
+import { fetchSubcategories, fetchCompositions, getCookie } from '../../data/adminApi';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
-function AddProduct() {
+function EditProduct() {
   const navigate = useNavigate();
-  const { categoryId } = useParams();
+  const { categoryId, productId } = useParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [subcategories, setSubcategories] = useState([]);
@@ -27,36 +27,58 @@ function AddProduct() {
   const [mainImagePreview, setMainImagePreview] = useState(null);
   const [additionalImagePreviews, setAdditionalImagePreviews] = useState([]);
 
-  useEffect(() => {
-    if (categoryId) {
-      setProductData(prev => ({
-        ...prev,
-        category: categoryId
-      }));
-    }
-  }, [categoryId]);
-
-  useEffect(() => {
-    console.log('Current categoryId:', categoryId);
-    console.log('Current productData:', productData);
-  }, [categoryId, productData]);
-
+  // Load initial data
   useEffect(() => {
     const loadData = async () => {
-      if (!categoryId) return;
+      if (!categoryId || !productId) return;
       
       try {
         setLoading(true);
-        const [subcategoriesData, compositionsData] = await Promise.all([
+        const [subcategoriesData, compositionsData, productResponse] = await Promise.all([
           fetchSubcategories(categoryId),
-          fetchCompositions()
+          fetchCompositions(),
+          fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            },
+          })
         ]);
+
+        if (!productResponse.ok) {
+          throw new Error('Failed to fetch product data');
+        }
+
+        const productData = await productResponse.json();
         
-        console.log('Subcategories:', subcategoriesData);
         setSubcategories(subcategoriesData);
         setCompositions(compositionsData?.compositions || []);
+        
+        // Set product data
+        setProductData({
+          style_number: productData.style_number || '',
+          gauge: productData.gauge || '',
+          end: productData.end || '',
+          weight: productData.weight || '',
+          description: productData.description || '',
+          category: categoryId,
+          sub_category: productData.sub_category?.id || '',
+          composition: productData.composition?.map(c => c.id) || [],
+          image: null,
+          images: []
+        });
+
+        // Set image previews if available
+        if (productData.image) {
+          setMainImagePreview(`http://127.0.0.1:8000${productData.image}`);
+        }
+        if (productData.images?.length > 0) {
+          setAdditionalImagePreviews(
+            productData.images.map(img => `http://127.0.0.1:8000${img.image}`)
+          );
+        }
+
       } catch (err) {
-        setError('Failed to load form data');
+        setError('Failed to load product data');
         console.error('Load data error:', err);
       } finally {
         setLoading(false);
@@ -64,73 +86,8 @@ function AddProduct() {
     };
 
     loadData();
-  }, [categoryId]);
+  }, [categoryId, productId]);
 
-  // Add new useEffect to load product data if editing
-  useEffect(() => {
-    const loadProductData = async () => {
-      // Check if we're in edit mode by looking for product ID in URL params
-      const searchParams = new URLSearchParams(window.location.search);
-      const productId = searchParams.get('productId');
-      
-      if (productId) {
-        try {
-          setLoading(true);
-          // Fetch the product data
-          const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-            },
-          });
-          
-          if (!response.ok) {
-            throw new Error('Failed to fetch product data');
-          }
-          
-          const productData = await response.json();
-          
-          // Update the form with existing product data
-          setProductData({
-            style_number: productData.style_number || '',
-            gauge: productData.gauge || '',
-            end: productData.end || '',
-            weight: productData.weight || '',
-            description: productData.description || '',
-            category: categoryId,
-            sub_category: productData.sub_category?.id || '',
-            composition: productData.composition?.map(c => c.id) || [],
-            image: null, // Can't pre-fill file inputs for security reasons
-            images: []
-          });
-        } catch (err) {
-          setError('Failed to load product data');
-          console.error('Error loading product:', err);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadProductData();
-  }, [categoryId]);
-
-  if (!categoryId) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-red-500">Invalid category ID</p>
-          <button
-            onClick={() => navigate('/admin')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Back to Categories
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Modify handleSubmit to handle both create and update
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!productData.sub_category || productData.composition.length === 0) {
@@ -171,19 +128,9 @@ function AddProduct() {
         });
       }
 
-      // Check if we're updating an existing product
-      const searchParams = new URLSearchParams(window.location.search);
-      const productId = searchParams.get('productId');
-      
-      const url = productId 
-        ? `http://127.0.0.1:8000/api/admin/products/${productId}/`
-        : 'http://127.0.0.1:8000/api/admin/products/';
-      
-      const method = productId ? 'PUT' : 'POST';
-
-      // Send the request
-      const response = await fetch(url, {
-        method: method,
+      // Send update request
+      const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'X-CSRFToken': getCookie('csrftoken'),
@@ -195,30 +142,28 @@ function AddProduct() {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.detail || data.error || `Failed to ${productId ? 'update' : 'create'} product`);
+        throw new Error(data.detail || data.error || 'Failed to update product');
       }
 
-      console.log(`Product ${productId ? 'updated' : 'created'} successfully:`, data);
+      console.log('Product updated successfully:', data);
       navigate(`/admin/category/${categoryId}/products`);
     } catch (err) {
-      console.error(`Error ${productId ? 'updating' : 'creating'} product:`, err);
-      setError(err.message || `Failed to ${productId ? 'update' : 'create'} product`);
+      console.error('Error updating product:', err);
+      setError(err.message || 'Failed to update product');
     } finally {
       setLoading(false);
     }
   };
 
-  // Update the composition select handler
+  // Handlers for form inputs
   const handleCompositionChange = (e) => {
     const selectedValues = Array.from(e.target.selectedOptions, option => option.value);
-    console.log('Selected composition values:', selectedValues); // Debug log
     setProductData(prev => ({
       ...prev,
       composition: selectedValues
     }));
   };
 
-  // Updated image handlers with previews
   const handleMainImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -226,7 +171,6 @@ function AddProduct() {
         ...prev,
         image: file
       }));
-      // Create preview URL
       setMainImagePreview(URL.createObjectURL(file));
     }
   };
@@ -238,18 +182,26 @@ function AddProduct() {
         ...prev,
         images: files
       }));
-      // Create preview URLs
       const previewUrls = files.map(file => URL.createObjectURL(file));
       setAdditionalImagePreviews(previewUrls);
     }
   };
 
-  // Update page title and button text based on mode
-  const searchParams = new URLSearchParams(window.location.search);
-  const isEditMode = searchParams.has('productId');
-  const pageTitle = isEditMode ? 'Edit Product' : 'Add New Product';
-  const submitButtonText = isEditMode ? 'Update Product' : 'Create Product';
-  const loadingText = isEditMode ? 'Updating...' : 'Creating...';
+  if (!categoryId || !productId) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-red-500">Invalid category or product ID</p>
+          <button
+            onClick={() => navigate('/admin')}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Back to Categories
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -263,7 +215,7 @@ function AddProduct() {
               <ArrowLeftIcon className="h-5 w-5 mr-2" />
               Back to Products
             </button>
-            <h1 className="text-3xl font-bold text-gray-900 mt-2">{pageTitle}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mt-2">Edit Product</h1>
           </div>
         </div>
 
@@ -309,11 +261,6 @@ function AddProduct() {
                   </option>
                 ))}
               </select>
-              {subcategories.length === 0 && !loading && (
-                <p className="text-sm text-gray-500 mt-1">
-                  No subcategories available for this category
-                </p>
-              )}
             </div>
 
             <div className="md:col-span-2">
@@ -459,10 +406,10 @@ function AddProduct() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  {loadingText}
+                  Updating...
                 </>
               ) : (
-                submitButtonText
+                'Update Product'
               )}
             </button>
           </div>
@@ -472,4 +419,4 @@ function AddProduct() {
   );
 }
 
-export default AddProduct;
+export default EditProduct; 

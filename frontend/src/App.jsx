@@ -12,6 +12,7 @@ import AddProduct from './pages/admin/AddProduct';
 import Login from './pages/admin/Login';
 import { InquiryProvider } from './context/InquiryContext';
 import CategoryWiseProducts from './pages/admin/CategoryWiseProducts';
+import EditProduct from './pages/admin/EditProduct';
 // import Login from './pages/Login';
 
 // Protected Route component
@@ -61,6 +62,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <CategoryWiseProducts />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/category/:categoryId/edit-product/:productId" 
+                element={
+                  <ProtectedRoute>
+                    <EditProduct />
                   </ProtectedRoute>
                 } 
               />
