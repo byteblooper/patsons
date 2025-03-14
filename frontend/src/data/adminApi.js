@@ -269,7 +269,7 @@ export const fetchSubcategories = async (categoryId) => {
 
 export const fetchCompositions = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/compositions/', {
+    const response = await fetch('http://127.0.0.1:8000/api/admin/compositions/', {
       headers: getAuthHeaders(),
       credentials: 'include',
     });

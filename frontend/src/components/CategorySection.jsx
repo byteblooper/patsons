@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { categories as localCategories } from "../data/products";
+import { fetchAllCategories } from "../data/products";
 
 function CategorySection() {
   const location = useLocation();
@@ -13,34 +13,37 @@ function CategorySection() {
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [isCategoryExpanded, setIsCategoryExpanded] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // API endpoint for future reference:
-    // const fetchCategories = async () => {
-    //   try {
-    //     const response = await fetch("https://patsons.pythonanywhere.com/api/categories/");
-    //     const data = await response.json();
-    //     if (data.status === "success") {
-    //       const formattedCategories = data.categories.map((category) => ({
-    //         id: category.id,
-    //         name: category.name,
-    //         subcategories: category.subcategories.map((sub) => ({
-    //           id: sub.id,
-    //           name: sub.name,
-    //           slug: sub.name.toLowerCase().replace(/\s+/g, "-"),
-    //         })),
-    //       }));
-    //       setCategories(formattedCategories);
-    //     }
-    //   } catch (error) {
-    //     console.error("Error fetching categories:", error);
-    //   }
-    // };
-    // fetchCategories();
+    const loadCategories = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchAllCategories();
+        console.log('Raw categories data:', data);
 
-    // Using local data
-    setCategories(localCategories);
+        // Handle both array and object response formats
+        const categoriesData = Array.isArray(data) ? data : data.categories || [];
+        console.log('Processed categories data:', categoriesData);
+
+        if (categoriesData.length === 0) {
+          setError('No categories found');
+        } else {
+          setCategories(categoriesData);
+        }
+      } catch (err) {
+        console.error('Error loading categories:', err);
+        setError(err.message || 'Failed to load categories');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCategories();
   }, []);
+  console.log(categories);
 
   // Automatically expand the category if there's an active main category
   useEffect(() => {
@@ -56,6 +59,7 @@ function CategorySection() {
       // Only navigate if not clicking the expand/collapse button
       navigate(`/products?main=${categoryId}`);
       setExpandedCategory(categoryId);
+      setIsCategoryExpanded(false); // Close mobile menu after selection
     }
   };
 
@@ -64,12 +68,31 @@ function CategorySection() {
     // Update the URL parameters to reflect the selected subcategory
     navigate(`/products?main=${mainCategoryId}&category=${subCategoryId}`);
     setIsCategoryExpanded(false); // Close mobile menu after selection
+    setExpandedCategory(null); // Reset expanded state
   };
 
   const toggleCategory = (category, event) => {
     event.stopPropagation();
     setExpandedCategory((prev) => (prev === category ? null : category));
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white md:bg-transparent p-8">
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white md:bg-transparent p-8">
+        <div className="text-center text-red-500">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <section className="bg-white md:bg-transparent">
@@ -87,7 +110,7 @@ function CategorySection() {
                 {activeCategory
                   ? categories.find(
                       (category) => category.id === activeMainCategory
-                    )?.subcategories.find((sub) => sub.id === activeCategory)
+                    )?.subcategories?.find((sub) => sub.id === activeCategory)
                       ?.name
                   : categories.find((category) => category.id === activeMainCategory)
                       ?.name}
@@ -140,7 +163,7 @@ function CategorySection() {
                       </div>
 
                       <AnimatePresence>
-                        {expandedCategory === category.id && (
+                        {expandedCategory === category.id && category.subcategories && (
                           <motion.div
                             initial={{ height: 0 }}
                             animate={{ height: "auto" }}
@@ -215,10 +238,14 @@ function CategorySection() {
                   <div className="relative">
                     <div className="aspect-[4/3] relative overflow-hidden">
                       <img
-                        src={category.image || "/placeholder.svg"}
+                        src={category.image ? `http://127.0.0.1:8000${category.image}` : "/placeholder.svg"}
                         alt={category.name}
                         className={`w-full h-full object-cover transition-transform duration-300
                           ${activeMainCategory === category.id ? "scale-105" : "group-hover:scale-105"}`}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "/placeholder.svg";
+                        }}
                       />
                     </div>
                     <button
@@ -240,7 +267,7 @@ function CategorySection() {
 
                 {/* Subcategories Panel - Desktop */}
                 <AnimatePresence>
-                  {expandedCategory === category.id && (
+                  {expandedCategory === category.id && category.subcategories && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Menu, X, ShoppingBag, ChevronDown, LogOut } from 'lucide-react';
 import { useInquiry } from '../context/InquiryContext';
 import CartPreview from './CartPreview';
+import { fetchAllCategories } from '../data/products';
 
 const routes = [
   { name: "Home", path: "/" },
@@ -102,22 +103,39 @@ function Navbar() {
   }, [searchQuery]);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const loadCategories = async () => {
       try {
-        const response = await fetch('https://patsons.pythonanywhere.com/api/categories/');
-        const data = await response.json();
-        if (data.status === "success") {
-          setCategories(data.categories);
+        const data = await fetchAllCategories();
+        console.log('Raw categories data:', data);
+        
+        // Handle both array and object response formats
+        const categoriesData = Array.isArray(data) ? data : data.categories || [];
+        console.log('Processed categories data:', categoriesData);
+        
+        if (categoriesData.length === 0) {
+          console.error('No categories found');
         } else {
-          console.error("Failed to fetch categories");
+          setCategories(categoriesData);
         }
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error('Error loading categories:', error);
       }
     };
 
-    fetchCategories();
+    loadCategories();
   }, []);
+
+  const handleCategoryClick = (categoryId, e) => {
+    e.preventDefault();
+    navigate(`/products?main=${categoryId}`);
+    setIsProductsOpen(false);
+  };
+
+  const handleSubcategoryClick = (categoryId, subcategoryId, e) => {
+    e.preventDefault();
+    navigate(`/products?main=${categoryId}&category=${subcategoryId}`);
+    setIsProductsOpen(false);
+  };
 
   return (
     <>
@@ -158,28 +176,41 @@ function Navbar() {
                             exit={{ opacity: 0, y: 10 }}
                             className="absolute top-full left-0 bg-white shadow-lg rounded-lg py-4 flex w-[40rem]"
                           >
-                            {categories.map(category => (
-                              <div key={category.id} className="px-4 py-2">
+                            <div className="grid grid-cols-3 gap-4 w-full px-4">
+                              <div className="col-span-3">
                                 <Link
-                                  to={`/products?main=${category.id}`}
-                                  className="text-sm font-semibold text-gray-900 hover:text-sky-600"
+                                  to="/products"
+                                  className="block px-4 py-2 text-sm font-semibold text-gray-900 hover:text-sky-600 hover:bg-sky-50 rounded-md"
+                                  onClick={() => setIsProductsOpen(false)}
                                 >
-                                  {category.name}
+                                  All Products
                                 </Link>
-                                <div className="mt-2 space-y-1">
-                                  {category.subcategories.map(sub => (
-                                    <Link
-                                      key={sub.id}
-                                      to={`/products?category=${sub.id}&main=${category.id}`}
-                                      className="block text-sm text-gray-600 hover:text-sky-600 hover:bg-sky-100 px-2 py-1 rounded"
-                                    >
-                                      {sub.name}
-                                    </Link>
-                                  ))}
-                                </div>
-                                <div className="mt-2 border-t border-gray-100" />
+                                <div className="border-t my-2"></div>
                               </div>
-                            ))}
+                              {categories.map(category => (
+                                <div key={category.id} className="space-y-2">
+                                  <Link
+                                    to={`/products?main=${category.id}`}
+                                    className="block px-4 py-2 text-sm font-semibold text-gray-900 hover:text-sky-600 hover:bg-sky-50 rounded-md"
+                                    onClick={(e) => handleCategoryClick(category.id, e)}
+                                  >
+                                    {category.name}
+                                  </Link>
+                                  <div className="space-y-1">
+                                    {category.subcategories?.map(sub => (
+                                      <Link
+                                        key={sub.id}
+                                        to={`/products?main=${category.id}&category=${sub.id}`}
+                                        className="block px-6 py-1 text-sm text-gray-600 hover:text-sky-600 hover:bg-sky-50 rounded-md"
+                                        onClick={(e) => handleSubcategoryClick(category.id, sub.id, e)}
+                                      >
+                                        {sub.name}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </motion.div>
                         )}
                       </AnimatePresence>

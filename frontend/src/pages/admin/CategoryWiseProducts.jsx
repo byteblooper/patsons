@@ -30,6 +30,10 @@ function CategoryWiseProducts() {
     navigate(`/admin/category/${categoryId}/add-product`);
   };
 
+  const handleEditProduct = (product) => {
+    navigate(`/admin/category/${categoryId}/edit-product/${product.id}`);
+  };
+
   const handleDeleteProduct = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
@@ -93,7 +97,7 @@ function CategoryWiseProducts() {
                 {/* Hover Actions */}
                 <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
                   <button
-                    onClick={() => navigate(`/admin/products/${product.id}/edit`)}
+                    onClick={() => handleEditProduct(product)}
                     className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
                     title="Edit Product"
                   >
