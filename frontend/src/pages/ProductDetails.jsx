@@ -78,7 +78,12 @@ function ProductDetails() {
     if (inInquiry) {
       removeFromInquiry(product.id);
     } else {
-      addToInquiry(product);
+      // Add the mainImage as image property before adding to inquiry
+      const productWithImage = {
+        ...product,
+        image: product.mainImage
+      };
+      addToInquiry(productWithImage);
     }
   };
 

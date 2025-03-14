@@ -4,41 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Menu, X, ShoppingBag, ChevronDown, LogOut } from 'lucide-react';
 import { useInquiry } from '../context/InquiryContext';
 import CartPreview from './CartPreview';
-import { fetchAllCategories } from '../data/products';
+import { fetchAllCategories, fetchAllProducts } from '../data/products';
 
 const routes = [
   { name: "Home", path: "/" },
   { name: "Products", path: "/products", hasDropdown: true },
   { name: "About", path: "/about" },
   { name: "Contact", path: "/contact" },
-];
-
-// Demo products for search - in real app, this would come from your database
-const searchProducts = [
-  {
-    id: 1,
-    name: "Classic Knit Sweater",
-    category: "mens-sweater",
-    image: "/placeholder.svg",
-    price: 89.99,
-    styleNumber: "MS2023-001",
-  },
-  {
-    id: 2,
-    name: "V-Neck T-Shirt",
-    category: "mens-tshirt",
-    image: "/placeholder.svg",
-    price: 29.99,
-    styleNumber: "MT2023-001",
-  },
-  {
-    id: 3,
-    name: "Ladies Denim Jacket",
-    category: "ladies-jacket",
-    image: "/placeholder.svg",
-    price: 129.99,
-    styleNumber: "LJ2023-001",
-  },
 ];
 
 function Navbar() {
@@ -48,6 +20,7 @@ function Navbar() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [products, setProducts] = useState([]);
   const { inquiryItems } = useInquiry();
   const cartCount = inquiryItems.length;
   const [isProductsOpen, setIsProductsOpen] = useState(false);
@@ -59,6 +32,20 @@ function Navbar() {
     // Check if user is admin by looking for access_token
     const accessToken = localStorage.getItem('access_token');
     setIsAdmin(!!accessToken);
+  }, []);
+
+  // Load products for search
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await fetchAllProducts();
+        const productsArray = Array.isArray(data) ? data : data.products || [];
+        setProducts(productsArray);
+      } catch (error) {
+        console.error('Error loading products:', error);
+      }
+    };
+    loadProducts();
   }, []);
 
   const handleLogout = async () => {
@@ -91,16 +78,14 @@ function Navbar() {
   // Handle search
   useEffect(() => {
     if (searchQuery.trim()) {
-      const results = searchProducts.filter(
-        (product) =>
-          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.styleNumber.toLowerCase().includes(searchQuery.toLowerCase())
+      const results = products.filter(
+        (product) => product.style_number?.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setSearchResults(results);
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, products]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -396,7 +381,7 @@ function Navbar() {
                         </div>
                         <div className="flex-1">
                           <h3 className="font-medium">{product.name}</h3>
-                          <p className="text-sm text-gray-600">{product.styleNumber}</p>
+                          <p className="text-sm text-gray-600">{product.style_number}</p>
                           
                         </div>
                       </Link>
