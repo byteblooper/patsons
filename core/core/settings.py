@@ -244,7 +244,7 @@ from datetime import timedelta
 
 SIMPLE_JWT = {
 
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
 
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 
@@ -252,6 +252,14 @@ SIMPLE_JWT = {
 
     'BLACKLIST_AFTER_ROTATION': True,
 
+}
+
+# Image optimization settings
+IMAGE_OPTIMIZATION = {
+    'MAX_WIDTH': 800,
+    'MAX_HEIGHT': 800,
+    'QUALITY': 80,
+    'FORMAT': 'JPEG'
 }
 
 
