@@ -85,6 +85,8 @@ export const products = [
   }
 ];
 
+import BaseUrl from "./ApiUrl";
+
 
 export const categories = [
   {
@@ -178,7 +180,7 @@ export const categories = [
 
 export const fetchAllProducts = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/products/', {
+    const response = await fetch(`${BaseUrl}/api/products/`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -202,7 +204,7 @@ export const fetchAllProducts = async () => {
 
 export const fetchAllCategories = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/categories/', {
+    const response = await fetch(`${BaseUrl}/api/categories/`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -227,7 +229,7 @@ export const fetchAllCategories = async () => {
 export const fetchCategoryProducts = async (categoryId) => {
   try {
     // Fetch all products and filter by category
-    const response = await fetch('http://127.0.0.1:8000/api/products/', {
+    const response = await fetch(`${BaseUrl}/api/products/`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -262,7 +264,7 @@ export const fetchCategoryProducts = async (categoryId) => {
 export const fetchSubcategoryProducts = async (categoryId, subcategoryId) => {
   try {
     // Fetch all products and filter by category and subcategory
-    const response = await fetch('http://127.0.0.1:8000/api/products/', {
+    const response = await fetch(`${BaseUrl}/api/products/`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -300,7 +302,7 @@ export const fetchSubcategoryProducts = async (categoryId, subcategoryId) => {
 
 export const fetchProductDetails = async (productId) => {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/products/${productId}/`, {
+    const response = await fetch(`${BaseUrl}/api/products/${productId}/`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

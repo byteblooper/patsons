@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { fetchAllCategories } from "../data/products";
 
+import BaseUrl from "../data/ApiUrl";
+
 function CategorySection() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -238,7 +240,7 @@ function CategorySection() {
                   <div className="relative">
                     <div className="aspect-[4/3] relative overflow-hidden">
                       <img
-                        src={category.image ? `http://127.0.0.1:8000${category.image}` : "/placeholder.svg"}
+                        src={category.image ? `${BaseUrl}${category.image}` : "/placeholder.svg"}
                         alt={category.name}
                         className={`w-full h-full object-cover transition-transform duration-300
                           ${activeMainCategory === category.id ? "scale-105" : "group-hover:scale-105"}`}

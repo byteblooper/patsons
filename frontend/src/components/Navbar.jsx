@@ -5,6 +5,7 @@ import { Search, Menu, X, ShoppingBag, ChevronDown, LogOut } from 'lucide-react'
 import { useInquiry } from '../context/InquiryContext';
 import CartPreview from './CartPreview';
 import { fetchAllCategories, fetchAllProducts } from '../data/products';
+import BaseUrl from '../data/ApiUrl';
 
 const routes = [
   { name: "Home", path: "/" },
@@ -52,7 +53,7 @@ function Navbar() {
     try {
       const refresh_token = localStorage.getItem('refresh_token');
       
-      const response = await fetch('http://127.0.0.1:8000/api/accounts/logout/', {
+      const response = await fetch(`${BaseUrl}/api/accounts/logout/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchSubcategories, fetchCompositions, getCookie } from '../../data/adminApi';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import BaseUrl from '../../data/ApiUrl';
+
+
 
 function EditProduct() {
   const navigate = useNavigate();
@@ -43,7 +46,7 @@ function EditProduct() {
         const [subcategoriesData, compositionsData, productResponse] = await Promise.all([
           fetchSubcategories(categoryId),
           fetchCompositions(),
-          fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
+          fetch(`${BaseUrl}/api/admin/products/${productId}/`, {
             headers,
             credentials: 'include'
           })
@@ -80,11 +83,11 @@ function EditProduct() {
 
         // Set image previews if available
         if (productData.image) {
-          setMainImagePreview(`http://127.0.0.1:8000${productData.image}`);
+          setMainImagePreview(`${BaseUrl}${productData.image}`);
         }
         if (productData.images?.length > 0) {
           setAdditionalImagePreviews(
-            productData.images.map(img => `http://127.0.0.1:8000${img.image}`)
+            productData.images.map(img => `${BaseUrl}${img.image}`)
           );
         }
 
@@ -139,7 +142,7 @@ function EditProduct() {
       }
 
       // Send update request
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
+      const response = await fetch(`${BaseUrl}/api/admin/products/${productId}/`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
