@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInquiry } from "../context/InquiryContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import BaseUrl from "../data/ApiUrl";
 
 function ProductDetails() {
   const { id } = useParams();
@@ -17,7 +18,7 @@ function ProductDetails() {
   const getFullImageUrl = (imageUrl) => {
     if (!imageUrl) return "/placeholder.svg";
     if (imageUrl.startsWith("http")) return imageUrl;
-    return `http://127.0.0.1:8000${imageUrl}`;
+    return `${BaseUrl}${imageUrl}`;
   };
 
   useEffect(() => {
@@ -25,7 +26,7 @@ function ProductDetails() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`http://127.0.0.1:8000/api/products/${id}/`);
+        const response = await fetch(`${BaseUrl}/api/products/${id}/`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch product data');
