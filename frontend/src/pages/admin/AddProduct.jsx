@@ -54,7 +54,7 @@ function AddProduct() {
         
         console.log('Subcategories:', subcategoriesData);
         setSubcategories(subcategoriesData);
-        setCompositions(compositionsData?.compositions || []);
+        setCompositions(compositionsData?.data || []);
       } catch (err) {
         setError('Failed to load form data');
         console.error('Load data error:', err);
