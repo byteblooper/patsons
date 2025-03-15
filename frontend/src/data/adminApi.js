@@ -349,32 +349,27 @@ export const deleteComposition = async (id) => {
 
 export const submitInquiry = async (inquiryData) => {
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/inquiry/', {
+    const response = await fetch('http://127.0.0.1:8000/api/Inquiry/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        full_name: inquiryData.fullName,
+        name: inquiryData.fullName,
         email: inquiryData.email,
-        phone_number: inquiryData.phone,
-        company_name: inquiryData.company,
         subject: inquiryData.subject,
         message: inquiryData.message,
-        products: inquiryData.products
+        items: inquiryData.products.map(product => product.id)
       })
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      if (data.errors) {
-        throw new Error(Object.values(data.errors).flat().join(', '));
-      }
-      throw new Error(data.message || 'Failed to submit inquiry');
+      throw new Error(data.detail || data.message || 'Failed to submit inquiry');
     }
 
-    return data;
+    return { success: true, data };
   } catch (error) {
     console.error('Error submitting inquiry:', error);
     throw error;
@@ -408,6 +403,128 @@ export const submitContactForm = async (contactData) => {
     return data;
   } catch (error) {
     console.error('Error submitting contact form:', error);
+    throw error;
+  }
+};
+
+export const fetchInquiries = async () => {
+  try {
+    const headers = getAuthHeaders();
+    if (!headers) return [];
+
+    const response = await fetch('http://127.0.0.1:8000/api/admin/Inquiry/', {
+      headers,
+      credentials: 'include',
+    });
+    
+    if (response.status === 401) {
+      handleUnauthorizedResponse({ response });
+      return [];
+    }
+    
+    if (!response.ok) throw new Error('Failed to fetch inquiries');
+    
+    const responseData = await response.json();
+    console.log('Inquiries response:', responseData); // Debug log
+    
+    // Return the data array from the response
+    return responseData.data || [];
+  } catch (error) {
+    console.error('Error fetching inquiries:', error);
+    return [];
+  }
+};
+
+export const fetchInquiryDetails = async (inquiryId) => {
+  try {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/Inquiry/${inquiryId}/`, {
+      headers,
+      credentials: 'include',
+    });
+    
+    if (response.status === 401) {
+      handleUnauthorizedResponse({ response });
+      return;
+    }
+    
+    if (!response.ok) throw new Error('Failed to fetch inquiry details');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching inquiry details:', error);
+    throw error;
+  }
+};
+
+export const deleteInquiry = async (inquiryId) => {
+  try {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/Inquiry/${inquiryId}/`, {
+      method: 'DELETE',
+      headers,
+      credentials: 'include',
+    });
+    
+    if (response.status === 401) {
+      handleUnauthorizedResponse({ response });
+      return;
+    }
+    
+    if (!response.ok) throw new Error('Failed to delete inquiry');
+    return true;
+  } catch (error) {
+    console.error('Error deleting inquiry:', error);
+    throw error;
+  }
+};
+
+export const fetchMessages = async () => {
+  try {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const response = await fetch('http://127.0.0.1:8000/api/admin/messages/', {
+      headers,
+      credentials: 'include',
+    });
+    
+    if (response.status === 401) {
+      handleUnauthorizedResponse({ response });
+      return;
+    }
+    
+    if (!response.ok) throw new Error('Failed to fetch messages');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    throw error;
+  }
+};
+
+export const deleteMessage = async (messageId) => {
+  try {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/messages/${messageId}/`, {
+      method: 'DELETE',
+      headers,
+      credentials: 'include',
+    });
+    
+    if (response.status === 401) {
+      handleUnauthorizedResponse({ response });
+      return;
+    }
+    
+    if (!response.ok) throw new Error('Failed to delete message');
+    return true;
+  } catch (error) {
+    console.error('Error deleting message:', error);
     throw error;
   }
 };
