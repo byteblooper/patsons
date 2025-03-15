@@ -28,7 +28,7 @@ class CategoryList(APIView):
     """
     Get all categories with their subcategories
     """
-    @method_decorator(cache_page(60 * 15))
+    @method_decorator(cache_page(60 * 1))
     @method_decorator(vary_on_cookie)
     def get(self, request):
         try:
