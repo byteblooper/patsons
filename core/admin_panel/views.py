@@ -16,6 +16,8 @@ from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 import json
+from django.core.cache import cache
+from api.views import CategoryList
 
 class SelectedSubCategoryView(APIView):
     '''
@@ -165,6 +167,11 @@ class CategoryView(APIView):
 
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
+    def invalidate_category_cache(self):
+        """Helper method to invalidate category cache"""
+        cache_key = CategoryList.get_cache_key(CategoryList())
+        cache.delete(cache_key)
+
     def get(self, request):
         """
         Retrieve a list of all categories.
@@ -192,6 +199,7 @@ class CategoryView(APIView):
         serializer = AdminCategorySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            self.invalidate_category_cache()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -229,6 +237,7 @@ class CategoryView(APIView):
         serializer = AdminCategorySerializer(category, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            self.invalidate_category_cache()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -245,6 +254,7 @@ class CategoryView(APIView):
         try:
             category = Category.objects.get(pk=pk)
             category.delete()
+            self.invalidate_category_cache()
             return Response(
                 {
                     'status': True,
@@ -276,7 +286,12 @@ class ProductListCreate(APIView):
 
     """
     permission_classes = [permissions.IsAuthenticated]
-    def get(self, request,pk=None):
+
+    def invalidate_product_cache(self):
+        """Helper method to invalidate product cache"""
+        cache.delete('product_list')
+
+    def get(self, request, pk=None):
         if pk:
             products = Product.objects.filter(category_id=pk)
         else:
@@ -288,6 +303,7 @@ class ProductListCreate(APIView):
         serializer = AdminProductSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            self.invalidate_product_cache()  # Clear cache after creation
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -307,34 +323,34 @@ class ProductDetail(APIView):
     
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_object(self, pk):
+    def invalidate_product_cache(self):
+        """Helper method to invalidate product cache"""
+        cache.delete('product_list')
 
+    def get_object(self, pk):
         try:
             return Product.objects.get(pk=pk)
         except Product.DoesNotExist:
             raise Http404
 
     def get(self, request, pk):
-
         product = self.get_object(pk)
         serializer = AdminProductSerializer(product)
         return Response(serializer.data)
 
     def put(self, request, pk):
-
         product = self.get_object(pk)
         serializer = AdminProductSerializer(product, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            self.invalidate_product_cache()  # Clear cache after update
             return Response(serializer.data)
-        return Response(
-            serializer.errors, status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-
         product = self.get_object(pk)
         product.delete()
+        self.invalidate_product_cache()  # Clear cache after deletion
         return Response(
             {'message': 'Product deleted successfully'},
             status=status.HTTP_204_NO_CONTENT

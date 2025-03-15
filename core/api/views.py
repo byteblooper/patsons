@@ -28,23 +28,34 @@ class CategoryList(APIView):
     """
     Get all categories with their subcategories
     """
-    @method_decorator(cache_page(60 * 1))
-    @method_decorator(vary_on_cookie)
+    def get_cache_key(self):
+        return 'category_list_cache_key'
+
     def get(self, request):
         try:
+            cache_key = self.get_cache_key()
+            cached_data = cache.get(cache_key)
+            
+            if cached_data:
+                return Response(cached_data)
+            
             categories = Category.objects.prefetch_related('subcategories').all()
             serializer = CategorySerializer(categories, many=True)
-            return Response({
+            response_data = {
                 'status': 'success',
                 'message': 'Categories fetched successfully',
                 'categories': serializer.data
-            }, status=status.HTTP_200_OK)
+            }
+            
+            # Cache for 5 minutes
+            cache.set(cache_key, response_data, 300)
+            
+            return Response(response_data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({
                 'status': 'error',
                 'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class ProductList(APIView):
     def get(self, request):
