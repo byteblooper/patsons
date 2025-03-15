@@ -351,7 +351,7 @@ export const deleteComposition = async (id) => {
 
 export const submitInquiry = async (inquiryData) => {
   try {
-    const response = await fetch(`${BaseUrl}/api/inquiry/`, {
+    const response = await fetch(`${BaseUrl}/api/Inquiry/`, {
 
       method: 'POST',
       headers: {
