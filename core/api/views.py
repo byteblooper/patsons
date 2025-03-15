@@ -14,7 +14,8 @@ from .serializers import (
     CategorySerializer,
     ContactUsSerializer, 
     InquirySerializer,
-    CompositionSerializer
+    CompositionSerializer,
+    InquiryCreateSerializer,
 )
 
 from .services.email_service import EmailService
@@ -56,7 +57,7 @@ class ProductList(APIView):
                     Prefetch('composition', queryset=Composition.objects.only('id', 'material')),
                     Prefetch('sub_category', queryset=SubCategory.objects.only('id', 'name'))
                 ).all()
-                cache.set(cache_key, products, timeout=300)  # Cache for 5 minutes
+                cache.set(cache_key, products, timeout=120)  # Cache for 2 minutes
             
             # Reset query log
             reset_queries()
@@ -170,41 +171,45 @@ class ContactUsView(APIView):
             },
             status=status.HTTP_400_BAD_REQUEST
         )
+    
 
 class InquiryView(APIView):
     """
-    Handle product inquiries
-    """
-    def post(self, request):
-        try:
-            serializer = InquirySerializer(data=request.data)
-            if serializer.is_valid():
-                inquiry = serializer.save()
-                
-                # Process inquiry items
-                items_data = request.data.get('items', [])
-                for item_data in items_data:
-                    product = get_object_or_404(Product, id=item_data['product'])
-                    inquiry_item = InquiryItems.objects.create(
-                        product=product
-                    )
-                    inquiry.items.add(inquiry_item)
-                
-                return Response({
-                    'status': 'success',
-                    'message': 'Inquiry submitted successfully',
-                    'data': serializer.data
-                }, status=status.HTTP_201_CREATED)
-            
-            return Response({
-                'status': 'error',
-                'message': 'Invalid data provided',
-                'errors': serializer.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
-            
-        except Exception as e:
-            return Response({
-                'status': 'error',
-                'message': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    API View for managing user inquiries.
+    
+    Methods:
+    - POST: Create a new inquiry with product items.
 
+    """
+
+    def post(self, request):
+        """
+        Create a new inquiry.
+        
+        Request Data:
+        - name: Name of the user
+        - email: User's email
+        - subject: Inquiry subject
+        - message: Inquiry message
+        - items: ["product_id_1", "product_id_2"]
+
+        
+        Returns:
+        - Success: Inquiry created successfully
+        - Error: Validation or other issues
+        """
+        serializer = InquiryCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            # Save the inquiry
+            inquiry = serializer.save()
+            response_data = InquirySerializer(inquiry).data
+            return Response({
+                "status": True,
+                "message": "Inquiry created successfully",
+                "data": response_data
+            }, status=status.HTTP_201_CREATED)
+        return Response({
+            "status": False,
+            "message": "Invalid data",
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)

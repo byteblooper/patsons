@@ -1,3 +1,5 @@
+import { getValidToken, handleUnauthorizedResponse } from '../utils/auth';
+
 export function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {
@@ -15,7 +17,9 @@ export function getCookie(name) {
 
 // Add a helper function to get headers with authorization
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('access_token');
+  const token = getValidToken();
+  if (!token) return null;
+
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`,
@@ -25,10 +29,19 @@ const getAuthHeaders = () => {
 
 export const fetchCategories = async () => {
   try {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
     const response = await fetch('http://127.0.0.1:8000/api/admin/categories/', {
-      headers: getAuthHeaders(),
+      headers,
       credentials: 'include',
     });
+    
+    if (response.status === 401) {
+      handleUnauthorizedResponse({ response });
+      return;
+    }
+    
     if (!response.ok) throw new Error('Failed to fetch categories');
     return await response.json();
   } catch (error) {
@@ -269,7 +282,7 @@ export const fetchSubcategories = async (categoryId) => {
 
 export const fetchCompositions = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/compositions/', {
+    const response = await fetch('http://127.0.0.1:8000/api/admin/compositions/', {
       headers: getAuthHeaders(),
       credentials: 'include',
     });
@@ -330,6 +343,71 @@ export const deleteComposition = async (id) => {
     return true;
   } catch (error) {
     console.error('Error deleting composition:', error);
+    throw error;
+  }
+};
+
+export const submitInquiry = async (inquiryData) => {
+  try {
+    const response = await fetch('http://127.0.0.1:8000/api/inquiry/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        full_name: inquiryData.fullName,
+        email: inquiryData.email,
+        phone_number: inquiryData.phone,
+        company_name: inquiryData.company,
+        subject: inquiryData.subject,
+        message: inquiryData.message,
+        products: inquiryData.products
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (data.errors) {
+        throw new Error(Object.values(data.errors).flat().join(', '));
+      }
+      throw new Error(data.message || 'Failed to submit inquiry');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error submitting inquiry:', error);
+    throw error;
+  }
+};
+
+export const submitContactForm = async (contactData) => {
+  try {
+    const response = await fetch('http://127.0.0.1:8000/api/contact-us/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: contactData.name,
+        email: contactData.email,
+        subject: contactData.subject,
+        message: contactData.message
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (data.errors) {
+        throw new Error(Object.values(data.errors).flat().join(', '));
+      }
+      throw new Error(data.message || 'Failed to submit contact form');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error submitting contact form:', error);
     throw error;
   }
 };

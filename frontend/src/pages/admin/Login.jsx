@@ -33,6 +33,11 @@ function Login() {
         localStorage.setItem('refresh_token', data.data.tokens.refresh);
         localStorage.setItem('user', JSON.stringify(data.data.user));
 
+        // Get token expiry from JWT
+        const payload = JSON.parse(atob(data.data.tokens.access.split('.')[1]));
+        const expiry = new Date(payload.exp * 1000);
+        localStorage.setItem('token_expiry', expiry.toISOString());
+
         // Redirect to admin home
         navigate('/admin');
       } else {
