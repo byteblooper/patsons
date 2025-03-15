@@ -281,51 +281,129 @@ function Navbar() {
       {/* Mobile menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            className="fixed inset-0 bg-white z-50 lg:hidden"
-          >
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-lg font-semibold">Menu</h2>
-              <button onClick={() => setMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <nav className="p-4">
-              {routes.map((route) => (
-                <Link
-                  key={route.path}
-                  to={route.path}
-                  className="block py-3 text-lg hover:text-sky-600"
-                  onClick={() => setMobileMenuOpen(false)}
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ x: "-100%", opacity: 0.5 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "-100%", opacity: 0.5 }}
+              transition={{
+                type: "spring",
+                stiffness: 100,
+                damping: 20,
+                mass: 0.8
+              }}
+              className="fixed left-0 top-0 bottom-0 w-[15rem] md:w-[33.333333%] bg-white z-50 shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                <h2 className="text-xl font-semibold text-gray-800">Menu</h2>
+                <button 
+                  onClick={() => setMobileMenuOpen(false)} 
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
                 >
-                  {route.name}
-                </Link>
-              ))}
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="block py-3 text-lg hover:text-sky-600"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Admin
-                </Link>
-              )}
-              {isAdmin && location.pathname.startsWith('/admin') && (
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full text-left py-3 text-lg text-red-600 hover:text-red-700"
-                >
-                  Logout
+                  <X className="w-6 h-6" />
                 </button>
-              )}
-            </nav>
-          </motion.div>
+              </div>
+              <nav className="p-5 overflow-y-auto max-h-[calc(100vh-5rem)]">
+                {routes.map((route) => (
+                  <div key={route.path} className="mb-2">
+                    {route.hasDropdown ? (
+                      <>
+                        <button
+                          onClick={() => setIsProductsOpen(!isProductsOpen)}
+                          className="w-full flex items-center justify-between py-3 text-lg text-gray-700 hover:text-sky-600 transition-colors duration-200"
+                        >
+                          {route.name}
+                          <ChevronDown 
+                            className={`w-5 h-5 transform transition-transform duration-300 ${
+                              isProductsOpen ? 'rotate-180' : ''
+                            }`} 
+                          />
+                        </button>
+                        <AnimatePresence>
+                          {isProductsOpen && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden ml-4 border-l border-gray-100"
+                            >
+                              <Link
+                                to="/products"
+                                className="block py-2.5 pl-4 text-gray-600 hover:text-sky-600 transition-colors duration-200"
+                                onClick={() => setMobileMenuOpen(false)}
+                              >
+                                All Products
+                              </Link>
+                              {categories.map(category => (
+                                <div key={category.id} className="mb-3">
+                                  <Link
+                                    to={`/products?main=${category.id}`}
+                                    className="block py-2.5 pl-4 font-medium text-gray-800 hover:text-sky-600 transition-colors duration-200"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                  >
+                                    {category.name}
+                                  </Link>
+                                  <div className="space-y-1">
+                                    {category.subcategories?.map(sub => (
+                                      <Link
+                                        key={sub.id}
+                                        to={`/products?main=${category.id}&category=${sub.id}`}
+                                        className="block py-2 pl-8 text-sm text-gray-600 hover:text-sky-600 transition-colors duration-200"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                      >
+                                        {sub.name}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </>
+                    ) : (
+                      <Link
+                        to={route.path}
+                        className="block py-3 text-lg text-gray-700 hover:text-sky-600 transition-colors duration-200"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {route.name}
+                      </Link>
+                    )}
+                  </div>
+                ))}
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="block py-3 text-lg text-gray-700 hover:text-sky-600 transition-colors duration-200"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Admin
+                  </Link>
+                )}
+                {isAdmin && location.pathname.startsWith('/admin') && (
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left py-3 text-lg text-red-600 hover:text-red-700 transition-colors duration-200"
+                  >
+                    Logout
+                  </button>
+                )}
+              </nav>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
