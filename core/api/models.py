@@ -108,20 +108,22 @@ class ContactUs(BaseContact):
 
 class InquiryItems(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False, unique=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        Product, 
+        on_delete=models.CASCADE,
+        related_name='inquiry_items'
+    )
 
     def __str__(self):
-        return f"{self.product.name}"
+        return f"{self.product.style_number}"
     
     class Meta:
         verbose_name = 'Inquiry Item'
         verbose_name_plural = 'Inquiry Items'
     
 class Inquiry(BaseContact):
-
-    items = models.ManyToManyField(InquiryItems, blank=True)
+    items = models.ManyToManyField(InquiryItems, related_name='inquiries', blank=True)
     is_read = models.BooleanField(default=False)
-
 
     def __str__(self):
         return f"{self.name} - {self.email} - {self.subject}"
@@ -129,6 +131,7 @@ class Inquiry(BaseContact):
     class Meta:
         verbose_name = 'Inquiry'
         verbose_name_plural = 'Inquiries'
+        ordering = ['-created_at']
 
 
 

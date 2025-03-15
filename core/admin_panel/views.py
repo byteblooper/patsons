@@ -4,7 +4,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import AdminCategorySerializer, AdminProductSerializer, AdminSubCategorySerializer,CompositionSerializer
 from django.http import Http404
-from api.models import Category, Product, Composition
+from api.models import Category, Product, Composition,ContactUs,Inquiry
+from api.serializers import ContactUsSerializer, InquirySerializer
+
+from django.shortcuts import get_object_or_404
+
 
 # Create your views here.
 
@@ -335,3 +339,84 @@ class ProductDetail(APIView):
             {'message': 'Product deleted successfully'},
             status=status.HTTP_204_NO_CONTENT
         )
+
+
+
+
+class ContactUsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        contacts = ContactUs.objects.all()
+        serializer = ContactUsSerializer(contacts, many=True)
+        return Response(serializer.data)
+    
+    def delete(self, request, pk):
+        contact = get_object_or_404(ContactUs, id=pk)
+        contact.delete()
+        return Response({
+            'status': 'success',
+            'message': 'Contact form deleted successfully'
+        }, status=status.HTTP_204_NO_CONTENT)
+
+
+class InquiryView(APIView):
+    """
+    API View for managing user inquiries.
+    
+    Methods:
+    - GET: Retrieve all inquiries of the user with product details.
+    - DELETE: Delete a specific inquiry by its ID.
+    """
+
+   
+
+    def get(self, request, pk=None):
+        """
+        Retrieve all inquiries or a specific inquiry by ID User must be authenticated.
+        
+        Parameters:
+        - inquiry_id: Optional. If provided, fetch the specific inquiry.
+        
+        Returns:
+        - Success: Inquiry details or list of inquiries
+        - Error: Inquiry not found
+        """
+        if pk:
+            # Fetch a specific inquiry
+            inquiry = get_object_or_404(Inquiry, id=pk)
+            serializer = InquirySerializer(inquiry)
+            return Response({
+                "status": True,
+                "message": "Inquiry details fetched successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        else:
+            # Fetch all inquiries
+            inquiries = Inquiry.objects.all()
+            serializer = InquirySerializer(inquiries, many=True)
+            return Response({
+                "status": True,
+                "message": "All inquiries fetched successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        """
+        Delete a specific inquiry by its ID.
+        
+        Parameters:
+        - inquiry_id: ID of the inquiry to delete
+        
+        Returns:
+        - Success: Inquiry deleted successfully
+        - Error: Inquiry not found
+        """
+        inquiry = get_object_or_404(Inquiry, id=pk)
+        inquiry.delete()
+        return Response({
+            "status": True,
+            "message": "Inquiry deleted successfully"
+        }, status=status.HTTP_204_NO_CONTENT)
+        
+  
+    
