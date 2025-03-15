@@ -28,23 +28,34 @@ class CategoryList(APIView):
     """
     Get all categories with their subcategories
     """
-    @method_decorator(cache_page(60 * 15))
-    @method_decorator(vary_on_cookie)
+    def get_cache_key(self):
+        return 'category_list_cache_key'
+
     def get(self, request):
         try:
+            cache_key = self.get_cache_key()
+            cached_data = cache.get(cache_key)
+            
+            if cached_data:
+                return Response(cached_data)
+            
             categories = Category.objects.prefetch_related('subcategories').all()
             serializer = CategorySerializer(categories, many=True)
-            return Response({
+            response_data = {
                 'status': 'success',
                 'message': 'Categories fetched successfully',
                 'categories': serializer.data
-            }, status=status.HTTP_200_OK)
+            }
+            
+            # Cache for 5 minutes
+            cache.set(cache_key, response_data, 300)
+            
+            return Response(response_data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({
                 'status': 'error',
                 'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class ProductList(APIView):
     def get(self, request):
@@ -57,7 +68,7 @@ class ProductList(APIView):
                     Prefetch('composition', queryset=Composition.objects.only('id', 'material')),
                     Prefetch('sub_category', queryset=SubCategory.objects.only('id', 'name'))
                 ).all()
-                cache.set(cache_key, products, timeout=120)  # Cache for 2 minutes
+                cache.set(cache_key, products, timeout=300)  # Cache for 5 minutes
             
             # Reset query log
             reset_queries()
@@ -100,17 +111,20 @@ class ProductDetail(APIView):
     """
     Get product details by ID
     """
-    @method_decorator(cache_page(60 * 15))
-    @method_decorator(vary_on_cookie)
     def get(self, request, pk):
         try:
-            product = get_object_or_404(
-                Product.objects.select_related('category').prefetch_related(
-                    Prefetch('images', queryset=ProductImage.objects.all()),
-                    Prefetch('composition', queryset=Composition.objects.all())
-                ),
-                id=pk
-            )
+            cache_key = f'product_detail_{pk}'
+            product = cache.get(cache_key)
+            
+            if product is None:
+                product = get_object_or_404(
+                    Product.objects.select_related('category').prefetch_related(
+                        Prefetch('images', queryset=ProductImage.objects.all()),
+                        Prefetch('composition', queryset=Composition.objects.all())
+                    ),
+                    id=pk
+                )
+                cache.set(cache_key, product, timeout=300)  # Cache for 5 minutes
             
             serializer = ProductDetailSerializer(product)
             return Response({
