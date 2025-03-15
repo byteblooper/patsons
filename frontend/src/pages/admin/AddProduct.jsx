@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createProduct, fetchSubcategories, fetchCompositions, getCookie } from '../../data/adminApi';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import BaseUrl from '../../data/ApiUrl';
 
 function AddProduct() {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ function AddProduct() {
         try {
           setLoading(true);
           // Fetch the product data
-          const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
+          const response = await fetch(`${BaseUrl}/api/admin/products/${productId}/`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
             },
@@ -176,8 +177,8 @@ function AddProduct() {
       const productId = searchParams.get('productId');
       
       const url = productId 
-        ? `http://127.0.0.1:8000/api/admin/products/${productId}/`
-        : 'http://127.0.0.1:8000/api/admin/products/';
+        ? `${BaseUrl}/api/admin/products/${productId}/`
+        : `${BaseUrl}/api/admin/products/`;
       
       const method = productId ? 'PUT' : 'POST';
 

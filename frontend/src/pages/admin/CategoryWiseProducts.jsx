@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { fetchCategoryProducts, deleteProduct } from '../../data/adminApi';
+import BaseUrl from '../../data/ApiUrl';
 
 function CategoryWiseProducts() {
   const { categoryId } = useParams();
@@ -75,7 +76,7 @@ function CategoryWiseProducts() {
               >
                 <div className="aspect-w-16 aspect-h-9">
                   <img
-                    src={`http://127.0.0.1:8000${product.image}`}
+                    src={`${BaseUrl}${product.image}`}
                     alt={product.style_number}
                     className="w-full h-full object-cover"
                   />

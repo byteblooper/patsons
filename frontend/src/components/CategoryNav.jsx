@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchAllCategories } from '../data/products';
+import BaseUrl from '../data/ApiUrl';
 
 function CategoryNav() {
   const [categories, setCategories] = useState([]);
@@ -85,7 +86,7 @@ function CategoryNav() {
                   {cat.name.toUpperCase()}
                 </h2>
                 <img
-                  src={cat.image ? `http://127.0.0.1:8000${cat.image}` : "/placeholder.svg"}
+                  src={cat.image ? `${BaseUrl}${cat.image}` : "/placeholder.svg"}
                   alt={cat.name}
                   className={`w-full md:w-1/2 h-52 md:h-auto object-cover rounded-lg ${
                     index % 2 === 0 ? "p-6" : "p-6"

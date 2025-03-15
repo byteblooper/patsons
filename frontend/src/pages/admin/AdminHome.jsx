@@ -29,6 +29,8 @@ import {
 } from '../../data/adminApi';
 import { useAuth } from '../../hooks/useAuth';
 
+import BaseUrl from '../../data/ApiUrl';
+
 function AdminHome() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
@@ -113,7 +115,7 @@ function AdminHome() {
   const loadCompositions = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/api/admin/compositions/', {
+      const response = await fetch(`${BaseUrl}/api/admin/compositions/`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json'
@@ -590,7 +592,7 @@ function AdminHome() {
                   {/* Category Image */}
                   <div className="w-48 h-48 flex-shrink-0">
                     <img
-                      src={`http://127.0.0.1:8000${category.image}`}
+                      src={`${BaseUrl}${category.image}`}
                       alt={category.name}
                       className="w-full h-full object-cover"
                     />
@@ -716,7 +718,7 @@ function AdminHome() {
                                     <div className="flex items-center">
                                       <div className="h-10 w-10 flex-shrink-0">
                                         <img
-                                          src={`http://127.0.0.1:8000${product.image}`}
+                                          src={`${BaseUrl}${product.image}`}
                                           alt={product.style_number}
                                           className="h-10 w-10 rounded-full object-cover"
                                         />
