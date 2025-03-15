@@ -68,7 +68,7 @@ class ProductList(APIView):
                     Prefetch('composition', queryset=Composition.objects.only('id', 'material')),
                     Prefetch('sub_category', queryset=SubCategory.objects.only('id', 'name'))
                 ).all()
-                cache.set(cache_key, products, timeout=120)  # Cache for 2 minutes
+                cache.set(cache_key, products, timeout=300)  # Cache for 5 minutes
             
             # Reset query log
             reset_queries()
@@ -111,17 +111,20 @@ class ProductDetail(APIView):
     """
     Get product details by ID
     """
-    @method_decorator(cache_page(60 * 15))
-    @method_decorator(vary_on_cookie)
     def get(self, request, pk):
         try:
-            product = get_object_or_404(
-                Product.objects.select_related('category').prefetch_related(
-                    Prefetch('images', queryset=ProductImage.objects.all()),
-                    Prefetch('composition', queryset=Composition.objects.all())
-                ),
-                id=pk
-            )
+            cache_key = f'product_detail_{pk}'
+            product = cache.get(cache_key)
+            
+            if product is None:
+                product = get_object_or_404(
+                    Product.objects.select_related('category').prefetch_related(
+                        Prefetch('images', queryset=ProductImage.objects.all()),
+                        Prefetch('composition', queryset=Composition.objects.all())
+                    ),
+                    id=pk
+                )
+                cache.set(cache_key, product, timeout=300)  # Cache for 5 minutes
             
             serializer = ProductDetailSerializer(product)
             return Response({

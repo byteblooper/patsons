@@ -323,9 +323,11 @@ class ProductDetail(APIView):
     
     permission_classes = [permissions.IsAuthenticated]
 
-    def invalidate_product_cache(self):
+    def invalidate_product_cache(self, pk=None):
         """Helper method to invalidate product cache"""
         cache.delete('product_list')
+        if pk:
+            cache.delete(f'product_detail_{pk}')
 
     def get_object(self, pk):
         try:
@@ -343,14 +345,14 @@ class ProductDetail(APIView):
         serializer = AdminProductSerializer(product, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            self.invalidate_product_cache()  # Clear cache after update
+            self.invalidate_product_cache(pk)  # Clear both caches
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         product = self.get_object(pk)
         product.delete()
-        self.invalidate_product_cache()  # Clear cache after deletion
+        self.invalidate_product_cache(pk)  # Clear both caches
         return Response(
             {'message': 'Product deleted successfully'},
             status=status.HTTP_204_NO_CONTENT
