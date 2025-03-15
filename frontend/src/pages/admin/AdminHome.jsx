@@ -25,7 +25,6 @@ import {
   fetchInquiries,
   deleteInquiry,
   fetchMessages,
-  deleteMessage,
   fetchInquiryDetails
 } from '../../data/adminApi';
 import { useAuth } from '../../hooks/useAuth';
@@ -65,12 +64,12 @@ function AdminHome() {
   const [inquiries, setInquiries] = useState([]);
   const [messages, setMessages] = useState([]);
   const [selectedInquiry, setSelectedInquiry] = useState(null);
-  const [selectedMessage, setSelectedMessage] = useState(null);
   const [showDeleteInquiry, setShowDeleteInquiry] = useState(false);
-  const [showDeleteMessage, setShowDeleteMessage] = useState(false);
   const [showInquiryDetails, setShowInquiryDetails] = useState(false);
   const [loadingInquiryDetails, setLoadingInquiryDetails] = useState(false);
   const [inquiryDetails, setInquiryDetails] = useState(null);
+  const [showMessageDetails, setShowMessageDetails] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState(null);
 
   // Get tab from URL parameters
   useEffect(() => {
@@ -470,17 +469,6 @@ function AdminHome() {
     }
   };
 
-  const handleDeleteMessage = async () => {
-    try {
-      await deleteMessage(selectedMessage.id);
-      await loadMessages();
-      setShowDeleteMessage(false);
-      setSelectedMessage(null);
-    } catch (err) {
-      setError('Failed to delete message');
-    }
-  };
-
   const handleViewInquiryDetails = async (inquiry) => {
     setSelectedInquiry(inquiry);
     setShowInquiryDetails(true);
@@ -503,6 +491,11 @@ function AdminHome() {
     } finally {
       setLoadingInquiryDetails(false);
     }
+  };
+
+  const handleViewMessage = (message) => {
+    setSelectedMessage(message);
+    setShowMessageDetails(true);
   };
 
   if (isLoading) {
@@ -947,14 +940,15 @@ function AdminHome() {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Message
                       </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {messages.map((message) => (
-                      <tr key={message.id} className="hover:bg-gray-50">
+                      <tr 
+                        key={message.id} 
+                        className="hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => handleViewMessage(message)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{message.name}</div>
                         </td>
@@ -968,17 +962,6 @@ function AdminHome() {
                           <div className="text-sm text-gray-500 truncate max-w-xs">
                             {message.message}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => {
-                              setSelectedMessage(message);
-                              setShowDeleteMessage(true);
-                            }}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
                         </td>
                       </tr>
                     ))}
@@ -1683,9 +1666,9 @@ function AdminHome() {
           )}
         </AnimatePresence>
 
-        {/* Delete Message Confirmation Modal */}
+        {/* Message Details Modal */}
         <AnimatePresence>
-          {showDeleteMessage && selectedMessage && (
+          {showMessageDetails && selectedMessage && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1696,36 +1679,38 @@ function AdminHome() {
                 initial={{ scale: 0.95 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0.95 }}
-                className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl"
+                className="bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto"
               >
-                <div className="flex items-center mb-6">
-                  <div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                    <TrashIcon className="h-6 w-6 text-red-600" />
-                  </div>
-                  <div className="ml-4">
-                    <h2 className="text-xl font-semibold text-gray-900">Delete Message</h2>
-                    <p className="mt-1 text-sm text-gray-500">This action cannot be undone.</p>
-                  </div>
-                </div>
-                <div className="bg-red-50 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-red-700">
-                    Are you sure you want to delete this message from {selectedMessage.name}?
-                  </p>
-                </div>
-                <div className="flex justify-end space-x-3">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Message Details</h2>
                   <button
-                    onClick={() => setShowDeleteMessage(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => {
+                      setShowMessageDetails(false);
+                      setSelectedMessage(null);
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   >
-                    Cancel
+                    <XMarkIcon className="h-6 w-6 text-gray-400" />
                   </button>
-                  <button
-                    onClick={handleDeleteMessage}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
-                  >
-                    <TrashIcon className="h-5 w-5 mr-1" />
-                    Delete
-                  </button>
+                </div>
+                
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Name</h3>
+                    <p className="text-base font-medium text-gray-900">{selectedMessage.name}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Email</h3>
+                    <p className="text-base font-medium text-gray-900">{selectedMessage.email}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Subject</h3>
+                    <p className="text-base font-medium text-gray-900">{selectedMessage.subject}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Message</h3>
+                    <p className="text-base text-gray-900 whitespace-pre-wrap">{selectedMessage.message}</p>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>

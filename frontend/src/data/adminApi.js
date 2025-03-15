@@ -487,7 +487,7 @@ export const fetchMessages = async () => {
     const headers = getAuthHeaders();
     if (!headers) return;
 
-    const response = await fetch('http://127.0.0.1:8000/api/admin/messages/', {
+    const response = await fetch('http://127.0.0.1:8000/api/admin/contact-us/', {
       headers,
       credentials: 'include',
     });
