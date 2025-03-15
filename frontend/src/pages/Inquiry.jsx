@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { useInquiry } from '../context/InquiryContext';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { submitInquiry } from '../data/adminApi';
 
 function Inquiry() {
-  const { inquiryItems, removeFromInquiry } = useInquiry();
+  const navigate = useNavigate();
+  const { inquiryItems, removeFromInquiry, clearInquiry } = useInquiry();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -13,11 +16,40 @@ function Inquiry() {
     company: '',
     phone: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    console.log('Inquiry items:', inquiryItems);
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Prepare the data to be sent
+      const inquiryData = {
+        ...formData,
+        products: inquiryItems.map(item => ({
+          product_id: item.id,
+          style_number: item.style_number
+        }))
+      };
+
+      // Submit the inquiry using the adminApi function
+      const response = await submitInquiry(inquiryData);
+      
+      if (response.status === 'success') {
+        // Clear the inquiry cart
+        clearInquiry();
+        // Redirect to a success page or home
+        navigate('/?inquiry=success');
+      } else {
+        throw new Error(response.message || 'Failed to submit inquiry');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to submit inquiry. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -235,10 +267,23 @@ function Inquiry() {
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transform transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                disabled={loading || inquiryItems.length === 0}
+                className={`w-full py-3 px-6 rounded-lg font-medium transform transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                  ${loading 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : inquiryItems.length === 0
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 hover:scale-[1.02] text-white'
+                  }`}
               >
-                Submit Inquiry
+                {loading ? 'Submitting...' : 'Submit Inquiry'}
               </button>
+              
+              {error && (
+                <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
+                  {error}
+                </div>
+              )}
             </form>
           </motion.div>
         </div>

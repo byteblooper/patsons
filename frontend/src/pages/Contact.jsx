@@ -6,6 +6,7 @@ import {
   EnvelopeIcon,
   GlobeAltIcon,
 } from '@heroicons/react/24/outline';
+import { submitContactForm } from '../data/adminApi';
 
 function Contact() {
   const [formData, setFormData] = useState({
@@ -14,11 +15,35 @@ function Contact() {
     subject: '',
     message: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Handle form submission
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const response = await submitContactForm(formData);
+      
+      if (response.status === 'success') {
+        setSuccess(true);
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        throw new Error(response.message || 'Failed to send message');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -179,10 +204,27 @@ function Contact() {
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                disabled={loading}
+                className={`w-full py-3 px-6 rounded-lg font-medium transform transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                  ${loading 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700 hover:scale-[1.02] text-white'
+                  }`}
               >
-                Send Message
+                {loading ? 'Sending...' : 'Send Message'}
               </button>
+
+              {error && (
+                <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
+                  {error}
+                </div>
+              )}
+
+              {success && (
+                <div className="mt-4 p-4 bg-green-50 border-l-4 border-green-500 text-green-700">
+                  Your message has been sent successfully! We'll get back to you soon.
+                </div>
+              )}
             </form>
           </motion.div>
         </div>
