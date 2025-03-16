@@ -125,7 +125,7 @@ function Navbar() {
 
   return (
     <>
-      <div className="bg-white fixed border-b-[0.1rem] border-gray-200 w-full top-0 z-50">
+      <div className="bg-white fixed  border-gray-200 w-full top-0 z-50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Mobile menu button */}
@@ -135,7 +135,7 @@ function Navbar() {
 
             {/* Logo */}
             <Link to="/" className="text-2xl font-bold">
-              Patson's
+              <img src="/logo-light.svg" alt="Studio Patsons" className="w-48 md:w-[2rem]" />
             </Link>
 
             {/* Desktop navigation */}
