@@ -70,28 +70,8 @@ class ProductList(APIView):
                 ).all()
                 cache.set(cache_key, products, timeout=300)  # Cache for 5 minutes
             
-            # Reset query log
-            reset_queries()
-            
-            # Start time
-            start = time.time()
-            
-            # Convert to list to execute the query
-            products_list = list(products)
-            
-            # Print query count and time
-            query_count = len(connection.queries)
-            end = time.time()
-            
-            print(f"Number of queries: {query_count}")
-            print(f"Time taken: {end - start:.2f} seconds")
-            
-            # Print actual queries for analysis
-            for query in connection.queries:
-                print(f"Query: {query['sql']}")
-            
             serializer = ProductSerializer(
-                products_list, 
+                products, 
                 many=True, 
                 context={'request': request}
             )
