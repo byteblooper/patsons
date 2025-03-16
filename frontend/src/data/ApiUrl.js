@@ -1,4 +1,4 @@
 
-const BaseUrl = "https://patsons.onrender.com";
+const BaseUrl = "https://two.tpopulargeneralhospitalpvt.com";
 
 export default BaseUrl;
