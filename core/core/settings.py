@@ -90,10 +90,17 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'patsons',  # From Render dashboard
+        'USER': 'patsons_user',  # From Render dashboard
+        'PASSWORD': 'DsTqE9yivREiv2NPXOZg7OdZzQ14nCya',  # From Render dashboard
+        'HOST': 'dpg-cvbe1din91rc739g1gh0-a.oregon-postgres.render.com',  # From Render dashboard
+        'PORT': '5432',  # Default PostgreSQL port
     }
 }
+
+
+
 
 
 # Password validation
