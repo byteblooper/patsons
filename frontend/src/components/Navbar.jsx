@@ -134,8 +134,8 @@ function Navbar() {
             </button>
 
             {/* Logo */}
-            <Link to="/" className="text-2xl font-bold">
-              Patson's
+            <Link to="/" className="flex items-center pl-4">
+              <img src="/public/logo-light.svg" alt="Patson's Logo" className="h-12" />
             </Link>
 
             {/* Desktop navigation */}
