@@ -85,6 +85,8 @@ export const products = [
   }
 ];
 
+import BaseUrl from "./ApiUrl";
+
 
 export const categories = [
   {
@@ -175,3 +177,149 @@ export const categories = [
     ]
   }
 ];
+
+export const fetchAllProducts = async () => {
+  try {
+    const response = await fetch(`${BaseUrl}/api/products/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to fetch products');
+    }
+    
+    const data = await response.json();
+    console.log('Products response:', data); // Debug log
+    return data.products || data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    // Return mock data as fallback
+    return products;
+  }
+};
+
+export const fetchAllCategories = async () => {
+  try {
+    const response = await fetch(`${BaseUrl}/api/categories/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to fetch categories');
+    }
+    
+    const data = await response.json();
+    console.log('Categories response:', data); // Debug log
+    return data.categories || data;
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    // Return mock data as fallback
+    return categories;
+  }
+};
+
+export const fetchCategoryProducts = async (categoryId) => {
+  try {
+    // Fetch all products and filter by category
+    const response = await fetch(`${BaseUrl}/api/products/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to fetch products');
+    }
+    
+    const data = await response.json();
+    console.log('All products response:', data); // Debug log
+    
+    // Get products array from response
+    const allProducts = data.products || data;
+    
+    // Filter products by category
+    const categoryProducts = allProducts.filter(product => 
+      product.category?.id === categoryId
+    );
+    
+    console.log('Filtered category products:', categoryProducts); // Debug log
+    return categoryProducts;
+  } catch (error) {
+    console.error('Error fetching category products:', error);
+    // Return filtered mock data as fallback
+    return products.filter(p => p.category?.id === categoryId);
+  }
+};
+
+export const fetchSubcategoryProducts = async (categoryId, subcategoryId) => {
+  try {
+    // Fetch all products and filter by category and subcategory
+    const response = await fetch(`${BaseUrl}/api/products/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to fetch products');
+    }
+    
+    const data = await response.json();
+    console.log('All products response:', data); // Debug log
+    
+    // Get products array from response
+    const allProducts = data.products || data;
+    
+    // Filter products by category and subcategory
+    const subcategoryProducts = allProducts.filter(product => 
+      product.category?.id === categoryId && 
+      product.sub_category?.id === subcategoryId
+    );
+    
+    console.log('Filtered subcategory products:', subcategoryProducts); // Debug log
+    return subcategoryProducts;
+  } catch (error) {
+    console.error('Error fetching subcategory products:', error);
+    // Return filtered mock data as fallback
+    return products.filter(p => 
+      p.category?.id === categoryId && 
+      p.sub_category?.id === subcategoryId
+    );
+  }
+};
+
+export const fetchProductDetails = async (productId) => {
+  try {
+    const response = await fetch(`${BaseUrl}/api/products/${productId}/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to fetch product details');
+    }
+    
+    const data = await response.json();
+    console.log('Product details response:', data); // Debug log
+    return data;
+  } catch (error) {
+    console.error('Error fetching product details:', error);
+    // Return mock product as fallback
+    return products.find(p => p.id === productId);
+  }
+};

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.shortcuts import get_object_or_404
 from .models import (
     Product, 
     ProductImage, 
@@ -92,35 +93,46 @@ class ContactUsSerializer(serializers.ModelSerializer):
         model = ContactUs
         fields = ['id', 'name', 'email', 'subject', 'message']
 
+
+
+
+
+
 class InquiryItemsSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    
     class Meta:
         model = InquiryItems
         fields = ['id', 'product']
 
-class InquirySerializer(serializers.ModelSerializer):
-    items = InquiryItemsSerializer(many=True, required=False)
-    
+
+
+class InquiryCreateSerializer(serializers.ModelSerializer):
+    items = serializers.ListField(
+        child=serializers.UUIDField(),
+        write_only=True,
+        help_text="List of product IDs for the inquiry"
+    )
+
     class Meta:
         model = Inquiry
-        fields = ['id', 'name', 'email', 'subject', 'message', 'items']
+        fields = ['name', 'email', 'subject', 'message', 'items']
 
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])
         inquiry = Inquiry.objects.create(**validated_data)
-        
-        # Create and add items
-        if items_data:
-            for item_data in items_data:
-                item = InquiryItems.objects.create(**item_data)
-                inquiry.items.add(item)
-        
+
+        for product_id in items_data:
+            product = get_object_or_404(Product, id=product_id)
+            inquiry_item = InquiryItems.objects.create(product=product)
+            inquiry.items.add(inquiry_item)
+
         return inquiry
+    
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['items'] = InquiryItemsSerializer(instance.items.all(), many=True).data
-        return representation
+class InquirySerializer(serializers.ModelSerializer):
+    items = InquiryItemsSerializer(many=True)
 
-
-
-
+    class Meta:
+        model = Inquiry
+        fields = ['id', 'name', 'email', 'subject', 'message', 'items', 'created_at', 'updated_at']

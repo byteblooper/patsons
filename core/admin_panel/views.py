@@ -2,9 +2,13 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import AdminCategorySerializer, AdminProductSerializer, AdminSubCategorySerializer
+from .serializers import AdminCategorySerializer, AdminProductSerializer, AdminSubCategorySerializer,CompositionSerializer
+from django.http import Http404
+from api.models import Category, Product, Composition,ContactUs,Inquiry
+from api.serializers import ContactUsSerializer, InquirySerializer
 
-from api.models import Category, Product, SubCategory
+from django.shortcuts import get_object_or_404
+
 
 # Create your views here.
 
@@ -12,8 +16,15 @@ from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 import json
+from django.core.cache import cache
+from api.views import CategoryList
 
 class SelectedSubCategoryView(APIView):
+    '''
+    login required. use access_token: Bearer <token>
+    get: fetch all subcategories of a category
+    '''
+    permission_classes=[permissions.IsAuthenticated]
     def get(self, request, pk):
         try:
             # Get subcategories that belong to the specified category
@@ -28,6 +39,118 @@ class SelectedSubCategoryView(APIView):
             )
     
 
+class ComporsitionView(APIView):
+    '''
+    login required. use access_token: Bearer <token>
+    get: fetch all compositions
+    
+    post: create a new composition {"material":"name"}
+    put:<uuid:pk> update a composition {"material":"name"}
+    delete:<uuid:pk> delete a composition
+    '''
+    permission_classes=[permissions.IsAuthenticated]
+    def get(self,request):
+        try:
+            compositions=Composition.objects.all()
+            serializer= CompositionSerializer(compositions,many=True)
+            return Response(
+                {
+                    'status': True,
+                    'message': 'Compositions fetched successfully',
+                    'data': serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+        
+        except Exception as e:
+            return Response(
+                {
+                    'status': False,
+                    'message': 'Error fetching compositions',
+                    'error': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    def post(self,request):
+        serializer=CompositionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {
+                    'status': True,
+                    'message': 'Composition created successfully',
+                    'data': serializer.data
+                },
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def put(self,request,pk):
+        try:
+            composition=Composition.objects.get(pk=pk)
+            serializer=CompositionSerializer(composition,data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(
+                    {
+                        'status': True,
+                        'message': 'Composition updated successfully',
+                        'data': serializer.data
+                    },
+                    status=status.HTTP_200_OK
+                )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Composition.DoesNotExist:
+            return Response(
+                {
+                    'status': False,
+                    'message': 'Composition not found',
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {
+                    'status': False,
+                    'message': 'Error updating composition',
+                    'error': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    def delete(self,request,pk):
+        try:
+            composition=Composition.objects.get(pk=pk)
+            composition.delete()
+            return Response(
+                {
+                    'status': True,
+                    'message': 'Composition deleted successfully',
+                },
+                status=status.HTTP_204_NO_CONTENT
+            )
+        except Composition.DoesNotExist:    
+            return Response(
+                {
+                    'status': False,
+                    'message': 'Composition not found',
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {
+                    'status': False,
+                    'message': 'Error deleting composition',
+                    'error': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+
+
 
 class CategoryView(APIView):
     """
@@ -39,10 +162,15 @@ class CategoryView(APIView):
     - PUT: Update an existing category by ID.
     - DELETE: Delete a category by ID.
     """
+    permission_classes = [permissions.IsAuthenticated]
 
-    # permission_classes = [permissions.IsAuthenticated]
 
     parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    def invalidate_category_cache(self):
+        """Helper method to invalidate category cache"""
+        cache_key = CategoryList.get_cache_key(CategoryList())
+        cache.delete(cache_key)
 
     def get(self, request):
         """
@@ -71,6 +199,7 @@ class CategoryView(APIView):
         serializer = AdminCategorySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            self.invalidate_category_cache()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -108,6 +237,7 @@ class CategoryView(APIView):
         serializer = AdminCategorySerializer(category, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            self.invalidate_category_cache()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -124,7 +254,14 @@ class CategoryView(APIView):
         try:
             category = Category.objects.get(pk=pk)
             category.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            self.invalidate_category_cache()
+            return Response(
+                {
+                    'status': True,
+                    'message': 'Category deleted successfully',
+                },
+                status=status.HTTP_204_NO_CONTENT
+            )
         except Category.DoesNotExist:
             return Response({'error': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -132,65 +269,172 @@ class CategoryView(APIView):
 
 
 
-class ProductView(APIView):
-    parser_classes = (MultiPartParser, FormParser, JSONParser)
+class ProductListCreate(APIView):
+    """   
+    To get products of a category use category uuid.
+    to post use this format:
+    "style_number": "P12345",
+    "gauge": "100",
+    "end": "round",
+    "weight": "200g",
+    "description": "High-quality product",
+    "composition": ["uuid-of-composition-1", "uuid-of-composition-2"],
+    "category": "uuid-of-category",
+    "sub_category": "uuid-of-subcategory",
+    "image": "image.jpg",
+    "images": [{ "image": "image1.jpg"},{ "image": "image2.jpg"} ]
+
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def invalidate_product_cache(self):
+        """Helper method to invalidate product cache"""
+        cache.delete('product_list')
 
     def get(self, request, pk=None):
         if pk:
             products = Product.objects.filter(category_id=pk)
         else:
             products = Product.objects.all()
-
-            
         serializer = AdminProductSerializer(products, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
+        return Response(serializer.data)
+
     def post(self, request):
-        try:
-            # Handle composition data if it's a string
-            if 'composition' in request.data and isinstance(request.data['composition'], str):
-                request.data._mutable = True
-                request.data['composition'] = json.loads(request.data['composition'])
-                request.data._mutable = False
-
-            serializer = AdminProductSerializer(
-                data=request.data,
-                context={'request': request}
-            )
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
-    def put(self, request, pk):
-        try:
-            product = Product.objects.get(pk=pk)
-        except Product.DoesNotExist:
-            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = AdminProductSerializer(
-            product,
-            data=request.data,
-            context={'request': request},
-            partial=True
-        )
+        serializer = AdminProductSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            self.invalidate_product_cache()  # Clear cache after creation
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ProductDetail(APIView):
+    """
+    API view to handle the details of a single product.
+
+    This view allows for retrieving, updating, and deleting a product
+    based on its primary key (pk).
+
+    Methods:
+    - get_object(pk): Retrieves a product by its primary key.
+    - get(request, pk): Returns the details of a product.
+    - put(request, pk): Updates the details of a product.
+    - delete(request, pk): Deletes a product.
+    """
+    
+    permission_classes = [permissions.IsAuthenticated]
+
+    def invalidate_product_cache(self, pk=None):
+        """Helper method to invalidate product cache"""
+        cache.delete('product_list')
+        if pk:
+            cache.delete(f'product_detail_{pk}')
+
+    def get_object(self, pk):
+        try:
+            return Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        product = self.get_object(pk)
+        serializer = AdminProductSerializer(product)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        product = self.get_object(pk)
+        serializer = AdminProductSerializer(product, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            self.invalidate_product_cache(pk)  # Clear both caches
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        product = self.get_object(pk)
+        product.delete()
+        self.invalidate_product_cache(pk)  # Clear both caches
+        return Response(
+            {'message': 'Product deleted successfully'},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+
+
+
+class ContactUsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        contacts = ContactUs.objects.all()
+        serializer = ContactUsSerializer(contacts, many=True)
+        return Response(serializer.data)
     
     def delete(self, request, pk):
-        try:
-            product = Product.objects.get(pk=pk)
-            product.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Product.DoesNotExist:
-            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        contact = get_object_or_404(ContactUs, id=pk)
+        contact.delete()
+        return Response({
+            'status': 'success',
+            'message': 'Contact form deleted successfully'
+        }, status=status.HTTP_204_NO_CONTENT)
 
 
+class InquiryView(APIView):
+    """
+    API View for managing user inquiries.
+    
+    Methods:
+    - GET: Retrieve all inquiries of the user with product details.
+    - DELETE: Delete a specific inquiry by its ID.
+    """
 
+   
 
+    def get(self, request, pk=None):
+        """
+        Retrieve all inquiries or a specific inquiry by ID User must be authenticated.
+        
+        Parameters:
+        - inquiry_id: Optional. If provided, fetch the specific inquiry.
+        
+        Returns:
+        - Success: Inquiry details or list of inquiries
+        - Error: Inquiry not found
+        """
+        if pk:
+            # Fetch a specific inquiry
+            inquiry = get_object_or_404(Inquiry, id=pk)
+            serializer = InquirySerializer(inquiry)
+            return Response({
+                "status": True,
+                "message": "Inquiry details fetched successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        else:
+            # Fetch all inquiries
+            inquiries = Inquiry.objects.all()
+            serializer = InquirySerializer(inquiries, many=True)
+            return Response({
+                "status": True,
+                "message": "All inquiries fetched successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        """
+        Delete a specific inquiry by its ID.
+        
+        Parameters:
+        - inquiry_id: ID of the inquiry to delete
+        
+        Returns:
+        - Success: Inquiry deleted successfully
+        - Error: Inquiry not found
+        """
+        inquiry = get_object_or_404(Inquiry, id=pk)
+        inquiry.delete()
+        return Response({
+            "status": True,
+            "message": "Inquiry deleted successfully"
+        }, status=status.HTTP_204_NO_CONTENT)
+        
+  
+    

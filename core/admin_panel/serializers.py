@@ -7,6 +7,12 @@ class AdminSubCategorySerializer(serializers.ModelSerializer):
         model = SubCategory
         fields = ['id', 'name']  # Only include necessary fields
 
+class CompositionSeriallizer(serializers.ModelSerializer):
+    class Meta:
+        model = Composition
+        fields ='__all__'
+
+
 class AdminCategorySerializer(serializers.ModelSerializer):
     subcategories = AdminSubCategorySerializer(many=True, required=False)
 
@@ -44,63 +50,66 @@ class ProductImageSerializer(serializers.ModelSerializer):
         model = ProductImage
         fields = ['id', 'image']  # Only include necessary fields
 
+
 class AdminProductSerializer(serializers.ModelSerializer):
-    images = ProductImageSerializer(many=True, required=False, read_only=True)  # Make it read-only
-    composition = serializers.PrimaryKeyRelatedField(many=True, queryset=Composition.objects.all(), required=False)
-    image = serializers.ImageField(required=False)  # Add this for main image
-    
+    image = serializers.ImageField(required=False)
+    images = ProductImageSerializer(many=True, required=False)
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=False)
+    sub_category = serializers.PrimaryKeyRelatedField(queryset=SubCategory.objects.all(), required=False)
+    composition = serializers.PrimaryKeyRelatedField(queryset=Composition.objects.all(), many=True)
+
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = [
+            'id', 'style_number', 'gauge', 'end', 'weight', 'description', 
+            'composition', 'category', 'sub_category', 'image', 'images'
+        ]
 
     def create(self, validated_data):
-        images = self.context['request'].FILES.getlist('images', [])
+        images_data = validated_data.pop('images', [])
         composition_data = validated_data.pop('composition', [])
         
-        # Create the product without M2M fields
+        # Create the product instance
         product = Product.objects.create(**validated_data)
-        
-        # Add composition if provided
-        if composition_data:
-            product.composition.set(composition_data)
-        
-        # Create product images
-        for image in images:
-            ProductImage.objects.create(image=image).product_images.add(product)
-            
+
+        # Add composition objects to the ManyToMany field
+        product.composition.set(composition_data)
+
+        # Handle images
+        for image_data in images_data:
+            product_image = ProductImage.objects.create(**image_data)
+            product.images.add(product_image)
+
         return product
 
     def update(self, instance, validated_data):
-        images = self.context['request'].FILES.getlist('images', [])
-        composition_data = validated_data.pop('composition', None)
-        
-        # Update the product fields
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+        images_data = validated_data.pop('images', [])
+        composition_data = validated_data.pop('composition', [])
 
-        # Update composition if provided
-        if composition_data is not None:
-            instance.composition.set(composition_data)
+        # Update basic fields
+        instance.style_number = validated_data.get('style_number', instance.style_number)
+        instance.gauge = validated_data.get('gauge', instance.gauge)
+        instance.end = validated_data.get('end', instance.end)
+        instance.weight = validated_data.get('weight', instance.weight)
+        instance.description = validated_data.get('description', instance.description)
 
-        # Handle images if provided
-        if images:
-            # Clear existing images
+        # Set many-to-many relationship for composition
+        instance.composition.set(composition_data)
+
+        # Update foreign keys
+        instance.category = validated_data.get('category', instance.category)
+        instance.sub_category = validated_data.get('sub_category', instance.sub_category)
+
+        # Handle single image
+        if 'image' in validated_data:
+            instance.image = validated_data['image']
+
+        # Handle Many-to-many field for images
+        if images_data:
             instance.images.clear()
-            # Add new images
-            for image in images:
-                ProductImage.objects.create(image=image).product_images.add(instance)
+            for image_data in images_data:
+                product_image = ProductImage.objects.create(**image_data)
+                instance.images.add(product_image)
 
+        instance.save()
         return instance
-
-class AdminProductDetailSerializer(serializers.ModelSerializer):
-    images = serializers.SerializerMethodField()
-    class Meta:
-        model = Product
-        fields = '__all__'
-
-    def get_images(self, obj):
-        return obj.images.all().values_list('image', flat=True)
-
-
-

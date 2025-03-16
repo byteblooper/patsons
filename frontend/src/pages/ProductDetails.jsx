@@ -3,58 +3,74 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInquiry } from "../context/InquiryContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { products as localProducts } from "../data/products";
+import BaseUrl from "../data/ApiUrl";
 
 function ProductDetails() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { addToInquiry, removeFromInquiry, isInInquiry } = useInquiry();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const inInquiry = product ? isInInquiry(product.id) : false;
 
   // Function to ensure image URL is absolute
   const getFullImageUrl = (imageUrl) => {
     if (!imageUrl) return "/placeholder.svg";
     if (imageUrl.startsWith("http")) return imageUrl;
-    return `https://patsons.pythonanywhere.com${imageUrl}`;
+    return `${BaseUrl}${imageUrl}`;
   };
 
   useEffect(() => {
-    // API endpoint for future reference:
-    // const fetchProduct = async () => {
-    //   try {
-    //     const response = await fetch(`https://patsons.pythonanywhere.com/api/products/${id}/`);
-    //     if (!response.ok) {
-    //       throw new Error(`Failed to fetch product data: ${response.statusText}`);
-    //     }
-    //     const data = await response.json();
-    //     if (data.status === "success") {
-    //       setProduct(data.product);
-    //     }
-    //   } catch (error) {
-    //     console.error("Error fetching product:", error);
-    //   }
-    // };
+    const loadProduct = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(`${BaseUrl}/api/products/${id}/`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch product data');
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'success' && data.product) {
+          const processedProduct = {
+            ...data.product,
+            mainImage: getFullImageUrl(data.product.image),
+            images: (data.product.images || []).map(img => ({
+              ...img,
+              image: getFullImageUrl(img.image)
+            }))
+          };
+          setProduct(processedProduct);
+        } else {
+          throw new Error(data.message || 'Failed to load product');
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to load product');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Using local data
-    const foundProduct = localProducts.find(p => p.id === id);
-    if (foundProduct) {
-      const processedProduct = {
-        ...foundProduct,
-        mainImage: getFullImageUrl(foundProduct.images?.[0]?.image),
-        images: (foundProduct.images || []).map(img => ({
-          ...img,
-          image: getFullImageUrl(img.image)
-        }))
-      };
-      setProduct(processedProduct);
+    if (id) {
+      loadProduct();
     }
   }, [id]);
 
-  if (!product) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-xl text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-xl text-red-600">{error || 'Product not found'}</p>
       </div>
     );
   }
@@ -63,7 +79,12 @@ function ProductDetails() {
     if (inInquiry) {
       removeFromInquiry(product.id);
     } else {
-      addToInquiry(product);
+      // Add the mainImage as image property before adding to inquiry
+      const productWithImage = {
+        ...product,
+        image: product.mainImage
+      };
+      addToInquiry(productWithImage);
     }
   };
 
@@ -89,10 +110,9 @@ function ProductDetails() {
   };
 
   const currentImage = getCurrentImageUrl();
-  console.log("Current Image URL:", currentImage);
 
   return (
-    <section className="py-12 sm:py-16">
+    <section className="py-12 sm:py-16 max-w-7xl mx-auto">
       <div className="container mx-auto px-4">
         <nav className="flex mb-8">
           <ol role="list" className="flex items-center">
@@ -137,26 +157,48 @@ function ProductDetails() {
         </nav>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Image Gallery */}
-          <div className="space-y-4">
+          {/* Left Side - Image Gallery */}
+          <div className="flex gap-10">
+            {/* Thumbnails on the left */}
+            <div className="flex flex-col gap-2">
+              {[product.mainImage, ...(product.images || []).map(img => img.image)].map((img, index) => (
+                <motion.button
+                  key={index}
+                  whileHover={{ scale: 1.05 }}
+                  onClick={() => setCurrentImageIndex(index)}
+                  className={`w-20 h-20 rounded-lg overflow-hidden border-2 flex-shrink-0
+                    ${currentImageIndex === index ? 'border-sky-500' : 'border-gray-200'}`}
+                >
+                  <img
+                    src={img}
+                    alt={`Product view ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => e.target.src = "/placeholder.svg"}
+                  />
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Main Image */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="relative aspect-square overflow-hidden rounded-lg bg-gray-100"
+              className="relative flex-grow"
             >
-              <motion.img
-                key={currentImage}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                src={currentImage}
-                alt={product.description}
-                className="w-full h-full object-contain"
-                onError={(e) => {
-                  console.log("Image load error:", e);
-                  e.target.src = "/placeholder.svg";
-                }}
-              />
+              <div className="aspect-square w-full rounded-lg overflow-hidden bg-gray-100">
+                <motion.img
+                  key={currentImage}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  src={currentImage}
+                  alt={product.description}
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    e.target.src = "/placeholder.svg";
+                  }}
+                />
+              </div>
               
               {/* Navigation Arrows */}
               {product.images.length > 0 && (
@@ -176,99 +218,81 @@ function ProductDetails() {
                 </>
               )}
             </motion.div>
-
-            {/* Thumbnail Gallery */}
-            {product.images.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  onClick={() => setCurrentImageIndex(0)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 
-                    ${currentImageIndex === 0 ? 'border-sky-500' : 'border-transparent'}`}
-                >
-                  <img
-                    src={product.mainImage}
-                    alt="Main"
-                    className="w-full h-full object-cover"
-                    onError={(e) => e.target.src = "/placeholder.svg"}
-                  />
-                </motion.button>
-                {product.images.map((img, index) => (
-                  <motion.button
-                    key={img.id}
-                    whileHover={{ scale: 1.05 }}
-                    onClick={() => setCurrentImageIndex(index + 1)}
-                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 
-                      ${currentImageIndex === index + 1 ? 'border-sky-500' : 'border-transparent'}`}
-                  >
-                    <img
-                      src={img.image}
-                      alt={`Product view ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => e.target.src = "/placeholder.svg"}
-                    />
-                  </motion.button>
-                ))}
-              </div>
-            )}
           </div>
-          
-          {/* Product Details */}
+
+          {/* Right Side - Product Information */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="space-y-6"
           >
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold">{product.style_number}</h1>
-              {product.category && (
-                <span className="inline-flex items-center rounded-full bg-sky-50 px-2 py-1 text-sm font-medium text-sky-700 ring-1 ring-inset ring-sky-700/10">
-                  {product.category.name}
-                </span>
-              )}
-            </div>
-            
-            <p className="text-gray-600">{product.description}</p>
-            
+            {/* Product Title */}
+            <h1 className="text-3xl font-bold text-gray-900">
+              {product.style_number}
+            </h1>
+
+            {/* Specifications */}
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Specifications</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <h2 className="text-2xl font-bold">Specifications</h2>
+              <div className="grid grid-cols-2 gap-y-4">
+                <div>
+                  <p className="text-gray-600">Style Number</p>
+                  <p className="font-medium">{product.style_number}</p>
+                </div>
                 <div>
                   <p className="text-gray-600">Gauge</p>
-                  <p className="font-medium">{product.gauge || 'N/A'}</p>
+                  <p className="font-medium">{product.gauge}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">End</p>
+                  <p className="font-medium">{product.end}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Weight</p>
-                  <p className="font-medium">{product.weight || 'N/A'}</p>
+                  <p className="font-medium">{product.weight}</p>
                 </div>
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Composition</h2>
+
+            {/* Composition */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Composition</h2>
               <div className="flex flex-wrap gap-2">
                 {product.composition?.map((comp) => (
                   <span
                     key={comp.id}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full"
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
                   >
                     {comp.material}
                   </span>
                 ))}
               </div>
             </div>
-            
+
+            {/* Add to Basket Button */}
             <button
               onClick={handleInquiryClick}
-              className={`w-full py-3 px-6 rounded-full font-medium transition-colors ${
-                inInquiry
-                  ? 'bg-red-500 text-white hover:bg-red-600'
-                  : 'bg-black text-white hover:bg-gray-800'
-              }`}
+              className="w-full bg-gray-900 text-white py-3 px-4 rounded flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
             >
-              {inInquiry ? 'Remove from Inquiry' : 'Add to Inquiry'}
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              {inInquiry ? 'Remove from Basket' : 'Add to Basket'}
             </button>
           </motion.div>
+        </div>
+
+        {/* Description Tab */}
+        <div className="mt-12">
+          <div className="border-b border-gray-200">
+            <button className="text-lg font-medium text-gray-900 pb-4 border-b-2 border-gray-900">
+              Description
+            </button>
+          </div>
+          <div className="py-6">
+            <h3 className="text-xl font-bold mb-4">Product Details</h3>
+            <p className="text-gray-600">{product.description}</p>
+          </div>
         </div>
       </div>
     </section>

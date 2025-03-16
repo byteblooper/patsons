@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Menu, X, ShoppingBag, ChevronDown } from 'lucide-react';
+import { Search, Menu, X, ShoppingBag, ChevronDown, LogOut } from 'lucide-react';
 import { useInquiry } from '../context/InquiryContext';
 import CartPreview from './CartPreview';
+import { fetchAllCategories, fetchAllProducts } from '../data/products';
+import BaseUrl from '../data/ApiUrl';
 
 const routes = [
   { name: "Home", path: "/" },
@@ -12,78 +14,114 @@ const routes = [
   { name: "Contact", path: "/contact" },
 ];
 
-// Demo products for search - in real app, this would come from your database
-const searchProducts = [
-  {
-    id: 1,
-    name: "Classic Knit Sweater",
-    category: "mens-sweater",
-    image: "/placeholder.svg",
-    price: 89.99,
-    styleNumber: "MS2023-001",
-  },
-  {
-    id: 2,
-    name: "V-Neck T-Shirt",
-    category: "mens-tshirt",
-    image: "/placeholder.svg",
-    price: 29.99,
-    styleNumber: "MT2023-001",
-  },
-  {
-    id: 3,
-    name: "Ladies Denim Jacket",
-    category: "ladies-jacket",
-    image: "/placeholder.svg",
-    price: 129.99,
-    styleNumber: "LJ2023-001",
-  },
-];
-
 function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [products, setProducts] = useState([]);
   const { inquiryItems } = useInquiry();
   const cartCount = inquiryItems.length;
   const [isProductsOpen, setIsProductsOpen] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    // Check if user is admin by looking for access_token
+    const accessToken = localStorage.getItem('access_token');
+    setIsAdmin(!!accessToken);
+  }, []);
+
+  // Load products for search
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await fetchAllProducts();
+        const productsArray = Array.isArray(data) ? data : data.products || [];
+        setProducts(productsArray);
+      } catch (error) {
+        console.error('Error loading products:', error);
+      }
+    };
+    loadProducts();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      const refresh_token = localStorage.getItem('refresh_token');
+      
+      const response = await fetch(`${BaseUrl}/api/accounts/logout/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify({ refresh: refresh_token }),
+      });
+
+      if (response.ok) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        setIsAdmin(false);
+        navigate('/');
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   // Handle search
   useEffect(() => {
     if (searchQuery.trim()) {
-      const results = searchProducts.filter(
-        (product) =>
-          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.styleNumber.toLowerCase().includes(searchQuery.toLowerCase())
+      const results = products.filter(
+        (product) => product.style_number?.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setSearchResults(results);
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, products]);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const loadCategories = async () => {
       try {
-        const response = await fetch('https://patsons.pythonanywhere.com/api/categories/');
-        const data = await response.json();
-        if (data.status === "success") {
-          setCategories(data.categories);
+        const data = await fetchAllCategories();
+        console.log('Raw categories data:', data);
+        
+        // Handle both array and object response formats
+        const categoriesData = Array.isArray(data) ? data : data.categories || [];
+        console.log('Processed categories data:', categoriesData);
+        
+        if (categoriesData.length === 0) {
+          console.error('No categories found');
         } else {
-          console.error("Failed to fetch categories");
+          setCategories(categoriesData);
         }
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error('Error loading categories:', error);
       }
     };
 
-    fetchCategories();
+    loadCategories();
   }, []);
+
+  const handleCategoryClick = (categoryId, e) => {
+    e.preventDefault();
+    navigate(`/products?main=${categoryId}`);
+    setIsProductsOpen(false);
+  };
+
+  const handleSubcategoryClick = (categoryId, subcategoryId, e) => {
+    e.preventDefault();
+    navigate(`/products?main=${categoryId}&category=${subcategoryId}`);
+    setIsProductsOpen(false);
+  };
 
   return (
     <>
@@ -91,7 +129,7 @@ function Navbar() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Mobile menu button */}
-            <button onClick={() => setIsMenuOpen(true)} className="lg:hidden p-2 hover:bg-gray-100 rounded-full">
+            <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 hover:bg-gray-100 rounded-full">
               <Menu className="w-6 h-6" />
             </button>
 
@@ -124,28 +162,41 @@ function Navbar() {
                             exit={{ opacity: 0, y: 10 }}
                             className="absolute top-full left-0 bg-white shadow-lg rounded-lg py-4 flex w-[40rem]"
                           >
-                            {categories.map(category => (
-                              <div key={category.id} className="px-4 py-2">
+                            <div className="grid grid-cols-3 gap-4 w-full px-4">
+                              <div className="col-span-3">
                                 <Link
-                                  to={`/products?main=${category.id}`}
-                                  className="text-sm font-semibold text-gray-900 hover:text-sky-600"
+                                  to="/products"
+                                  className="block px-4 py-2 text-sm font-semibold text-gray-900 hover:text-sky-600 hover:bg-sky-50 rounded-md"
+                                  onClick={() => setIsProductsOpen(false)}
                                 >
-                                  {category.name}
+                                  All Products
                                 </Link>
-                                <div className="mt-2 space-y-1">
-                                  {category.subcategories.map(sub => (
-                                    <Link
-                                      key={sub.id}
-                                      to={`/products?category=${sub.id}&main=${category.id}`}
-                                      className="block text-sm text-gray-600 hover:text-sky-600 hover:bg-sky-100 px-2 py-1 rounded"
-                                    >
-                                      {sub.name}
-                                    </Link>
-                                  ))}
-                                </div>
-                                <div className="mt-2 border-t border-gray-100" />
+                                <div className="border-t my-2"></div>
                               </div>
-                            ))}
+                              {categories.map(category => (
+                                <div key={category.id} className="space-y-2">
+                                  <Link
+                                    to={`/products?main=${category.id}`}
+                                    className="block px-4 py-2 text-sm font-semibold text-gray-900 hover:text-sky-600 hover:bg-sky-50 rounded-md"
+                                    onClick={(e) => handleCategoryClick(category.id, e)}
+                                  >
+                                    {category.name}
+                                  </Link>
+                                  <div className="space-y-1">
+                                    {category.subcategories?.map(sub => (
+                                      <Link
+                                        key={sub.id}
+                                        to={`/products?main=${category.id}&category=${sub.id}`}
+                                        className="block px-6 py-1 text-sm text-gray-600 hover:text-sky-600 hover:bg-sky-50 rounded-md"
+                                        onClick={(e) => handleSubcategoryClick(category.id, sub.id, e)}
+                                      >
+                                        {sub.name}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -169,29 +220,59 @@ function Navbar() {
                   )}
                 </div>
               ))}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className={`
+                    relative py-2 text-sm font-medium transition-colors
+                    ${location.pathname === "/admin" ? "text-sky-600" : "text-gray-700 hover:text-sky-600"}
+                  `}
+                >
+                  Admin
+                  {location.pathname === "/admin" && (
+                    <motion.div
+                      layoutId="navbar-underline"
+                      className="absolute left-0 right-0 bottom-0 h-0.5 bg-sky-600"
+                    />
+                  )}
+                </Link>
+              )}
             </nav>
 
             {/* Right section */}
             <div className="flex items-center space-x-4">
-              <button onClick={() => setIsSearchOpen(true)} className="p-2 hover:bg-gray-100 rounded-full">
-                <Search className="w-5 h-5" />
-              </button>
-              <div className="relative">
-                <button 
-                  onClick={() => setIsCartOpen(!isCartOpen)} 
-                  className="p-2 hover:bg-gray-100 rounded-full"
+              {!location.pathname.startsWith('/admin') && (
+                <>
+                  <button onClick={() => setIsSearchOpen(true)} className="p-2 hover:bg-gray-100 rounded-full">
+                    <Search className="w-5 h-5" />
+                  </button>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsCartOpen(!isCartOpen)} 
+                      className="p-2 hover:bg-gray-100 rounded-full"
+                    >
+                      <ShoppingBag className="w-5 h-5" />
+                      {cartCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-sky-600 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                          {cartCount}
+                        </span>
+                      )}
+                    </button>
+                    <AnimatePresence>
+                      {isCartOpen && <CartPreview isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />}
+                    </AnimatePresence>
+                  </div>
+                </>
+              )}
+              {isAdmin && location.pathname.startsWith('/admin') && (
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                 >
-                  <ShoppingBag className="w-5 h-5" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-sky-600 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
-                      {cartCount}
-                    </span>
-                  )}
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
                 </button>
-                <AnimatePresence>
-                  {isCartOpen && <CartPreview isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />}
-                </AnimatePresence>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -199,32 +280,130 @@ function Navbar() {
 
       {/* Mobile menu */}
       <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            className="fixed inset-0 bg-white z-50 lg:hidden"
-          >
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-lg font-semibold">Menu</h2>
-              <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <nav className="p-4">
-              {routes.map((route) => (
-                <Link
-                  key={route.path}
-                  to={route.path}
-                  className="block py-3 text-lg hover:text-sky-600"
-                  onClick={() => setIsMenuOpen(false)}
+        {mobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ x: "-100%", opacity: 0.5 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "-100%", opacity: 0.5 }}
+              transition={{
+                type: "spring",
+                stiffness: 100,
+                damping: 20,
+                mass: 0.8
+              }}
+              className="fixed left-0 top-0 bottom-0 w-[15rem] md:w-[33.333333%] bg-white z-50 shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                <h2 className="text-xl font-semibold text-gray-800">Menu</h2>
+                <button 
+                  onClick={() => setMobileMenuOpen(false)} 
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
                 >
-                  {route.name}
-                </Link>
-              ))}
-            </nav>
-          </motion.div>
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <nav className="p-5 overflow-y-auto max-h-[calc(100vh-5rem)]">
+                {routes.map((route) => (
+                  <div key={route.path} className="mb-2">
+                    {route.hasDropdown ? (
+                      <>
+                        <button
+                          onClick={() => setIsProductsOpen(!isProductsOpen)}
+                          className="w-full flex items-center justify-between py-3 text-lg text-gray-700 hover:text-sky-600 transition-colors duration-200"
+                        >
+                          {route.name}
+                          <ChevronDown 
+                            className={`w-5 h-5 transform transition-transform duration-300 ${
+                              isProductsOpen ? 'rotate-180' : ''
+                            }`} 
+                          />
+                        </button>
+                        <AnimatePresence>
+                          {isProductsOpen && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden ml-4 border-l border-gray-100"
+                            >
+                              <Link
+                                to="/products"
+                                className="block py-2.5 pl-4 text-gray-600 hover:text-sky-600 transition-colors duration-200"
+                                onClick={() => setMobileMenuOpen(false)}
+                              >
+                                All Products
+                              </Link>
+                              {categories.map(category => (
+                                <div key={category.id} className="mb-3">
+                                  <Link
+                                    to={`/products?main=${category.id}`}
+                                    className="block py-2.5 pl-4 font-medium text-gray-800 hover:text-sky-600 transition-colors duration-200"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                  >
+                                    {category.name}
+                                  </Link>
+                                  <div className="space-y-1">
+                                    {category.subcategories?.map(sub => (
+                                      <Link
+                                        key={sub.id}
+                                        to={`/products?main=${category.id}&category=${sub.id}`}
+                                        className="block py-2 pl-8 text-sm text-gray-600 hover:text-sky-600 transition-colors duration-200"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                      >
+                                        {sub.name}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </>
+                    ) : (
+                      <Link
+                        to={route.path}
+                        className="block py-3 text-lg text-gray-700 hover:text-sky-600 transition-colors duration-200"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {route.name}
+                      </Link>
+                    )}
+                  </div>
+                ))}
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="block py-3 text-lg text-gray-700 hover:text-sky-600 transition-colors duration-200"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Admin
+                  </Link>
+                )}
+                {isAdmin && location.pathname.startsWith('/admin') && (
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left py-3 text-lg text-red-600 hover:text-red-700 transition-colors duration-200"
+                  >
+                    Logout
+                  </button>
+                )}
+              </nav>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
@@ -281,7 +460,7 @@ function Navbar() {
                         </div>
                         <div className="flex-1">
                           <h3 className="font-medium">{product.name}</h3>
-                          <p className="text-sm text-gray-600">{product.styleNumber}</p>
+                          <p className="text-sm text-gray-600">{product.style_number}</p>
                           
                         </div>
                       </Link>

@@ -43,7 +43,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'api',
+    'accounts',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'debug_toolbar',
+
     
 ]
 
@@ -208,5 +212,54 @@ LOGGING = {
 # Create logs directory if it doesn't exist
 LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)
+
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+
+
+
+
+
+# Add REST Framework settings
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '60/minute',  # Limit anonymous users to 60 requests per minute
+        'user': '240/minute'  # Limit authenticated users to 240 requests per minute
+    }
+}
+
+
+
+# JWT settings
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+
+    'ROTATE_REFRESH_TOKENS': True,
+
+    'BLACKLIST_AFTER_ROTATION': True,
+
+}
+
+# Image optimization settings
+IMAGE_OPTIMIZATION = {
+    'MAX_WIDTH': 800,
+    'MAX_HEIGHT': 800,
+    'QUALITY': 80,
+    'FORMAT': 'JPEG'
+}
 
 
