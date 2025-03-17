@@ -216,7 +216,7 @@ function CategorySection() {
                 <div className="relative">
                   <div className="aspect-[4/3] relative overflow-hidden">
                     <img
-                      src="/placeholder.svg"
+                      src="https://img.freepik.com/free-photo/pretty-family-winter-forest_23-2147765539.jpg?t=st=1742240149~exp=1742243749~hmac=6d3b638ba60d66e0a81a0e227d646ac4e35aad6633600893c1701df305541882&w=1380"
                       alt="All Products"
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />

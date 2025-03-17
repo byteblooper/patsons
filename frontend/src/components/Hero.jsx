@@ -3,17 +3,22 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 const images = {
-  left: "https://img.freepik.com/premium-photo/young-beautiful-girl-with-long-curly-hair-brown-leather-jacket-posing-pastel-orange_97875-680.jpg?uid=R114821896&ga=GA1.1.1103696323.1736837892&semt=ais_hybrid",
-  right: "https://img.freepik.com/free-photo/trendy-model-posing-contently-with-buying_23-2147689049.jpg?uid=R114821896&ga=GA1.1.1103696323.1736837892&semt=ais_hybrid",
-  top: "https://img.freepik.com/free-photo/stylish-woman-summer-outfit-isolated-posing-fashion-trend-isolated_285396-480.jpg?uid=R114821896&ga=GA1.1.1103696323.1736837892&semt=ais_hybrid",
-  textBg: "https://img.freepik.com/free-photo/happy-teenager-with-fringe-pointing_1149-964.jpg?uid=R114821896&ga=GA1.1.1103696323.1736837892&semt=ais_hybrid",
+  left: "https://images.pexels.com/photos/19688483/pexels-photo-19688483/free-photo-of-young-boy-posing-during-winter.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+  right: "https://images.pexels.com/photos/10667859/pexels-photo-10667859.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+  top: "https://images.pexels.com/photos/30683718/pexels-photo-30683718/free-photo-of-playful-child-in-blue-hoody-and-winter-hat.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+  textBg: "https://img.freepik.com/free-photo/friends-spending-time-together_23-2149306141.jpg",
 };
 
 const backgrounds = [
-  "https://img.freepik.com/free-photo/hand-painted-watercolor-background-with-sky-clouds-shape_24972-1095.jpg?uid=R114821896&ga=GA1.1.1103696323.1736837892&semt=ais_hybrid",
-  "https://img.freepik.com/premium-vector/blue-mandala-background_1278957-1113.jpg?uid=R114821896&ga=GA1.1.1103696323.1736837892&semt=ais_hybrid",
-  "https://img.freepik.com/free-photo/psychedelic-paper-shapes-with-copy-space_23-2149378246.jpg?uid=R114821896&ga=GA1.1.1103696323.1736837892&semt=ais_hybrid",
-  "https://img.freepik.com/premium-photo/geometric-shapes-wavy-curve-wavy-seamless-blank-empty-design-banner-abstract_941600-236052.jpg?uid=R114821896&ga=GA1.1.1103696323.1736837892&semt=ais_hybrid",
+  "https://images.pexels.com/photos/6261903/pexels-photo-6261903.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+  // "https://images.pexels.com/photos/5893858/pexels-photo-5893858.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+  "https://images.pexels.com/photos/14416450/pexels-photo-14416450.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+  "https://img.freepik.com/free-photo/portrait-trendy-looking-cute-young-caucasian-male-with-wavy-voluminous-curly-hairstyle-fooling-around-pulling-gray-sweater-his-face-leaving-eyes-open-having-confident-facial-expression_343059-2565.jpg?t=st=1742237836~exp=1742241436~hmac=b9024bf8b5850f452dec6e48657239a43f3ab84d410f8cd9ede561d0963fbcf2&w=1380",
+  "https://images.pexels.com/photos/6261904/pexels-photo-6261904.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+  "https://images.pexels.com/photos/12599035/pexels-photo-12599035.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+  "https://img.freepik.com/free-photo/fashion-winter-portrait-blonde-brunette-beautiful-best-friends-girls-hugs-having-fun-wearing-bright-stylish-cashmere-sweaters-scarfs-have-trendy-makeup-long-amazing-hairs_291049-569.jpg?t=st=1742238147~exp=1742241747~hmac=1a22a6e4096410cd4b1b1b74dbc9f25e07022c2f23e78a9fbfd1fdb6b3d64e03&w=826"
+
+
 ];
 
 function Hero({ startAnimations }) {
