@@ -10,7 +10,7 @@ urlpatterns = [
     path('products/<uuid:pk>/', ProductDetail.as_view(), name='product-detail'),
     path('compositions/', CompositionView.as_view(), name='composition-list'),
     path('contact-us/', ContactUsView.as_view(), name='contact-us'),
-    path('inquiry/', InquiryView.as_view(), name='inquiry'),
+    path('Inquiry/', InquiryView.as_view(), name='inquiry'),
     path('categories/', CategoryList.as_view(), name='category-list'),
     
 ] 

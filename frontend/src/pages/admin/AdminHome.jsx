@@ -8,22 +8,28 @@ import {
   XMarkIcon,
   ListBulletIcon,
   ChevronDownIcon,
-  ChevronUpIcon
+  ChevronUpIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
 import { 
   fetchCategories, 
   createCategory, 
   updateCategory, 
   deleteCategory, 
-  fetchCompositions,
   createComposition,
   updateComposition,
   deleteComposition,
   fetchCategoryProducts,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  fetchInquiries,
+  deleteInquiry,
+  fetchMessages,
+  fetchInquiryDetails
 } from '../../data/adminApi';
 import { useAuth } from '../../hooks/useAuth';
+
+import BaseUrl from '../../data/ApiUrl';
 
 function AdminHome() {
   const navigate = useNavigate();
@@ -57,12 +63,40 @@ function AdminHome() {
   const [showEditProduct, setShowEditProduct] = useState(false);
   const [showDeleteProduct, setShowDeleteProduct] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [inquiries, setInquiries] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [selectedInquiry, setSelectedInquiry] = useState(null);
+  const [showDeleteInquiry, setShowDeleteInquiry] = useState(false);
+  const [showInquiryDetails, setShowInquiryDetails] = useState(false);
+  const [loadingInquiryDetails, setLoadingInquiryDetails] = useState(false);
+  const [inquiryDetails, setInquiryDetails] = useState(null);
+  const [showMessageDetails, setShowMessageDetails] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+
+  // Get tab from URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, []);
+
+  // Update URL when tab changes
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    navigate(`/admin?tab=${tab}`);
+  };
 
   useEffect(() => {
     if (activeTab === 'categories') {
       loadCategories();
-    } else {
+    } else if (activeTab === 'compositions') {
       loadCompositions();
+    } else if (activeTab === 'inquiries') {
+      loadInquiries();
+    } else if (activeTab === 'messages') {
+      loadMessages();
     }
   }, [activeTab]);
 
@@ -81,10 +115,60 @@ function AdminHome() {
   const loadCompositions = async () => {
     try {
       setLoading(true);
-      const data = await fetchCompositions();
-      setCompositions(data.compositions || []);
+      const response = await fetch(`${BaseUrl}/api/admin/compositions/`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load compositions');
+      }
+
+      const responseData = await response.json();
+      console.log('Raw compositions response:', responseData);
+      
+      // Extract compositions from the data array in the response
+      if (responseData && responseData.data && Array.isArray(responseData.data)) {
+        setCompositions(responseData.data);
+      } else {
+        setCompositions([]);
+        console.error('Unexpected compositions data format:', responseData);
+      }
     } catch (err) {
+      console.error('Error loading compositions:', err);
       setError('Failed to load compositions');
+      setCompositions([]); // Ensure compositions is always an array
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadInquiries = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchInquiries();
+      console.log('Loaded inquiries:', data); // Debug log
+      setInquiries(data || []);
+    } catch (err) {
+      console.error('Error loading inquiries:', err);
+      setError('Failed to load inquiries');
+      setInquiries([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMessages = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchMessages();
+      setMessages(data);
+    } catch (err) {
+      setError('Failed to load messages');
     } finally {
       setLoading(false);
     }
@@ -374,6 +458,48 @@ function AdminHome() {
     }
   };
 
+  const handleDeleteInquiry = async () => {
+    try {
+      setError(null);
+      await deleteInquiry(selectedInquiry.id);
+      await loadInquiries();
+      setShowDeleteInquiry(false);
+      setSelectedInquiry(null);
+    } catch (error) {
+      console.error('Error in handleDeleteInquiry:', error);
+      setError('Failed to delete inquiry');
+    }
+  };
+
+  const handleViewInquiryDetails = async (inquiry) => {
+    setSelectedInquiry(inquiry);
+    setShowInquiryDetails(true);
+    setLoadingInquiryDetails(true);
+    setError(null);
+    setInquiryDetails(null);
+    
+    try {
+      const response = await fetchInquiryDetails(inquiry.id);
+      console.log('Fetched inquiry details:', response);
+      
+      if (response && response.data) {
+        setInquiryDetails(response.data);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Error fetching inquiry details:', error);
+      setError('Failed to load inquiry details');
+    } finally {
+      setLoadingInquiryDetails(false);
+    }
+  };
+
+  const handleViewMessage = (message) => {
+    setSelectedMessage(message);
+    setShowMessageDetails(true);
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -389,7 +515,7 @@ function AdminHome() {
         <div className="border-b border-gray-200 mb-8">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             <button
-              onClick={() => setActiveTab('categories')}
+              onClick={() => handleTabChange('categories')}
               className={`${
                 activeTab === 'categories'
                   ? 'border-blue-500 text-blue-600'
@@ -399,7 +525,7 @@ function AdminHome() {
               Categories
             </button>
             <button
-              onClick={() => setActiveTab('compositions')}
+              onClick={() => handleTabChange('compositions')}
               className={`${
                 activeTab === 'compositions'
                   ? 'border-blue-500 text-blue-600'
@@ -408,23 +534,48 @@ function AdminHome() {
             >
               Compositions
             </button>
+            <button
+              onClick={() => handleTabChange('inquiries')}
+              className={`${
+                activeTab === 'inquiries'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Inquiries
+            </button>
+            <button
+              onClick={() => handleTabChange('messages')}
+              className={`${
+                activeTab === 'messages'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Messages
+            </button>
           </nav>
         </div>
 
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
-            {activeTab === 'categories' ? 'Category Management' : 'Composition Management'}
+            {activeTab === 'categories' ? 'Category Management' : 
+             activeTab === 'compositions' ? 'Composition Management' :
+             activeTab === 'inquiries' ? 'Inquiry Management' :
+             'Message Management'}
           </h1>
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => activeTab === 'categories' ? setShowAddCategory(true) : setShowAddComposition(true)}
-              className="flex items-center px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
-            >
-              <PlusIcon className="w-4 h-4 mr-2" />
-              Add {activeTab === 'categories' ? 'Category' : 'Composition'}
-            </button>
-          </div>
+          {(activeTab === 'categories' || activeTab === 'compositions') && (
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => activeTab === 'categories' ? setShowAddCategory(true) : setShowAddComposition(true)}
+                className="flex items-center px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
+              >
+                <PlusIcon className="w-4 h-4 mr-2" />
+                Add {activeTab === 'categories' ? 'Category' : 'Composition'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Content Area */}
@@ -441,7 +592,7 @@ function AdminHome() {
                   {/* Category Image */}
                   <div className="w-48 h-48 flex-shrink-0">
                     <img
-                      src={`http://127.0.0.1:8000${category.image}`}
+                      src={`${BaseUrl}${category.image}`}
                       alt={category.name}
                       className="w-full h-full object-cover"
                     />
@@ -567,7 +718,7 @@ function AdminHome() {
                                     <div className="flex items-center">
                                       <div className="h-10 w-10 flex-shrink-0">
                                         <img
-                                          src={`http://127.0.0.1:8000${product.image}`}
+                                          src={`${BaseUrl}${product.image}`}
                                           alt={product.style_number}
                                           className="h-10 w-10 rounded-full object-cover"
                                         />
@@ -619,7 +770,7 @@ function AdminHome() {
               </motion.div>
             ))}
           </div>
-        ) : (
+        ) : activeTab === 'compositions' ? (
           <div className="bg-white shadow-lg rounded-xl overflow-hidden">
             {loading ? (
               <div className="flex items-center justify-center h-64">
@@ -706,6 +857,119 @@ function AdminHome() {
                   </div>
                 </div>
               </>
+            )}
+          </div>
+        ) : activeTab === 'inquiries' ? (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-2xl font-bold mb-4">Inquiries Management</h2>
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              </div>
+            ) : error ? (
+              <div className="text-red-500 p-4 bg-red-50 rounded-lg">{error}</div>
+            ) : inquiries.length === 0 ? (
+              <div className="text-gray-500 text-center py-8">No inquiries found</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {inquiries.map((inquiry) => (
+                      <tr key={inquiry.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">{inquiry.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{inquiry.email}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{inquiry.subject}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {new Date(inquiry.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => handleViewInquiryDetails(inquiry)}
+                            className="text-blue-600 hover:text-blue-800 mr-3"
+                          >
+                            View Details
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedInquiry(inquiry);
+                              setShowDeleteInquiry(true);
+                            }}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-white shadow-lg rounded-xl overflow-hidden">
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                <p className="text-lg">No messages found</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Subject
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Message
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {messages.map((message) => (
+                      <tr 
+                        key={message.id} 
+                        className="hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => handleViewMessage(message)}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{message.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">{message.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">{message.subject}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-500 truncate max-w-xs">
+                            {message.message}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         )}
@@ -1230,6 +1494,225 @@ function AdminHome() {
                     <TrashIcon className="h-5 w-5 mr-1" />
                     Delete
                   </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Inquiry Details Modal */}
+        <AnimatePresence>
+          {showInquiryDetails && selectedInquiry && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.95 }}
+                className="bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto"
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Inquiry Details</h2>
+                  <button
+                    onClick={() => {
+                      setShowInquiryDetails(false);
+                      setInquiryDetails(null);
+                      setError(null);
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <XMarkIcon className="h-6 w-6 text-gray-400" />
+                  </button>
+                </div>
+                
+                {loadingInquiryDetails ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : error ? (
+                  <div className="text-red-500 p-4 bg-red-50 rounded-lg">{error}</div>
+                ) : inquiryDetails ? (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Contact Information</h3>
+                      <div className="mt-2 grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Name</p>
+                          <p className="text-base font-medium text-gray-900">{inquiryDetails.name || '-'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Email</p>
+                          <p className="text-base font-medium text-gray-900">{inquiryDetails.email || '-'}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Inquiry Details</h3>
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-500">Subject</p>
+                        <p className="text-base font-medium text-gray-900">{inquiryDetails.subject || '-'}</p>
+                      </div>
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-500">Message</p>
+                        <p className="text-base text-gray-900 whitespace-pre-wrap">{inquiryDetails.message || '-'}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Inquired Products</h3>
+                      <div className="mt-2 space-y-4">
+                        {Array.isArray(inquiryDetails.items) && inquiryDetails.items.length > 0 ? (
+                          inquiryDetails.items.map((item, index) => (
+                            <div key={index} className="flex items-center space-x-4 bg-gray-50 p-4 rounded-lg">
+                              <div className="flex-shrink-0">
+                                <img 
+                                  src={`http://127.0.0.1:8000${item.product.image}`}
+                                  alt={item.product.style_number}
+                                  className="h-16 w-16 object-cover rounded-lg"
+                                />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-900">
+                                  <span className="font-semibold">Style Number:</span> {item.product.style_number}
+                                </p>
+                                {item.product.description && (
+                                  <p className="text-sm text-gray-600 mt-1">{item.product.description}</p>
+                                )}
+                                {item.product.composition && item.product.composition.length > 0 && (
+                                  <div className="flex flex-wrap gap-2 mt-2">
+                                    {item.product.composition.map((comp, idx) => (
+                                      <span key={idx} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
+                                        {comp.material}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">No products in this inquiry</p>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Additional Information</h3>
+                      <div className="mt-2 grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Created At</p>
+                          <p className="text-base font-medium text-gray-900">
+                            {inquiryDetails.created_at ? new Date(inquiryDetails.created_at).toLocaleString() : '-'}
+                          </p>
+                        </div>
+                       
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-gray-500 text-center py-8">No details available</div>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Delete Inquiry Confirmation Modal */}
+        <AnimatePresence>
+          {showDeleteInquiry && selectedInquiry && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.95 }}
+                className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl"
+              >
+                <div className="flex items-center mb-6">
+                  <div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <TrashIcon className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div className="ml-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Delete Inquiry</h2>
+                    <p className="mt-1 text-sm text-gray-500">This action cannot be undone.</p>
+                  </div>
+                </div>
+                <div className="bg-red-50 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-red-700">
+                    Are you sure you want to delete this inquiry from {selectedInquiry.name}?
+                  </p>
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowDeleteInquiry(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteInquiry}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
+                  >
+                    <TrashIcon className="h-5 w-5 mr-1" />
+                    Delete
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Message Details Modal */}
+        <AnimatePresence>
+          {showMessageDetails && selectedMessage && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.95 }}
+                className="bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto"
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Message Details</h2>
+                  <button
+                    onClick={() => {
+                      setShowMessageDetails(false);
+                      setSelectedMessage(null);
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <XMarkIcon className="h-6 w-6 text-gray-400" />
+                  </button>
+                </div>
+                
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Name</h3>
+                    <p className="text-base font-medium text-gray-900">{selectedMessage.name}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Email</h3>
+                    <p className="text-base font-medium text-gray-900">{selectedMessage.email}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Subject</h3>
+                    <p className="text-base font-medium text-gray-900">{selectedMessage.subject}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Message</h3>
+                    <p className="text-base text-gray-900 whitespace-pre-wrap">{selectedMessage.message}</p>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>

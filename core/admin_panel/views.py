@@ -4,7 +4,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import AdminCategorySerializer, AdminProductSerializer, AdminSubCategorySerializer,CompositionSerializer
 from django.http import Http404
-from api.models import Category, Product, Composition
+from api.models import Category, Product, Composition,ContactUs,Inquiry
+from api.serializers import ContactUsSerializer, InquirySerializer
+
+from django.shortcuts import get_object_or_404
+
 
 # Create your views here.
 
@@ -12,6 +16,8 @@ from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 import json
+from django.core.cache import cache
+from api.views import CategoryList
 
 class SelectedSubCategoryView(APIView):
     '''
@@ -161,6 +167,11 @@ class CategoryView(APIView):
 
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
+    def invalidate_category_cache(self):
+        """Helper method to invalidate category cache"""
+        cache_key = CategoryList.get_cache_key(CategoryList())
+        cache.delete(cache_key)
+
     def get(self, request):
         """
         Retrieve a list of all categories.
@@ -188,6 +199,7 @@ class CategoryView(APIView):
         serializer = AdminCategorySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            self.invalidate_category_cache()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -225,6 +237,7 @@ class CategoryView(APIView):
         serializer = AdminCategorySerializer(category, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            self.invalidate_category_cache()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -241,6 +254,7 @@ class CategoryView(APIView):
         try:
             category = Category.objects.get(pk=pk)
             category.delete()
+            self.invalidate_category_cache()
             return Response(
                 {
                     'status': True,
@@ -272,7 +286,12 @@ class ProductListCreate(APIView):
 
     """
     permission_classes = [permissions.IsAuthenticated]
-    def get(self, request,pk=None):
+
+    def invalidate_product_cache(self):
+        """Helper method to invalidate product cache"""
+        cache.delete('product_list')
+
+    def get(self, request, pk=None):
         if pk:
             products = Product.objects.filter(category_id=pk)
         else:
@@ -284,6 +303,7 @@ class ProductListCreate(APIView):
         serializer = AdminProductSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            self.invalidate_product_cache()  # Clear cache after creation
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -303,35 +323,118 @@ class ProductDetail(APIView):
     
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_object(self, pk):
+    def invalidate_product_cache(self, pk=None):
+        """Helper method to invalidate product cache"""
+        cache.delete('product_list')
+        if pk:
+            cache.delete(f'product_detail_{pk}')
 
+    def get_object(self, pk):
         try:
             return Product.objects.get(pk=pk)
         except Product.DoesNotExist:
             raise Http404
 
     def get(self, request, pk):
-
         product = self.get_object(pk)
         serializer = AdminProductSerializer(product)
         return Response(serializer.data)
 
     def put(self, request, pk):
-
         product = self.get_object(pk)
         serializer = AdminProductSerializer(product, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            self.invalidate_product_cache(pk)  # Clear both caches
             return Response(serializer.data)
-        return Response(
-            serializer.errors, status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-
         product = self.get_object(pk)
         product.delete()
+        self.invalidate_product_cache(pk)  # Clear both caches
         return Response(
             {'message': 'Product deleted successfully'},
             status=status.HTTP_204_NO_CONTENT
         )
+
+
+
+
+class ContactUsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        contacts = ContactUs.objects.all()
+        serializer = ContactUsSerializer(contacts, many=True)
+        return Response(serializer.data)
+    
+    def delete(self, request, pk):
+        contact = get_object_or_404(ContactUs, id=pk)
+        contact.delete()
+        return Response({
+            'status': 'success',
+            'message': 'Contact form deleted successfully'
+        }, status=status.HTTP_204_NO_CONTENT)
+
+
+class InquiryView(APIView):
+    """
+    API View for managing user inquiries.
+    
+    Methods:
+    - GET: Retrieve all inquiries of the user with product details.
+    - DELETE: Delete a specific inquiry by its ID.
+    """
+
+   
+
+    def get(self, request, pk=None):
+        """
+        Retrieve all inquiries or a specific inquiry by ID User must be authenticated.
+        
+        Parameters:
+        - inquiry_id: Optional. If provided, fetch the specific inquiry.
+        
+        Returns:
+        - Success: Inquiry details or list of inquiries
+        - Error: Inquiry not found
+        """
+        if pk:
+            # Fetch a specific inquiry
+            inquiry = get_object_or_404(Inquiry, id=pk)
+            serializer = InquirySerializer(inquiry)
+            return Response({
+                "status": True,
+                "message": "Inquiry details fetched successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        else:
+            # Fetch all inquiries
+            inquiries = Inquiry.objects.all()
+            serializer = InquirySerializer(inquiries, many=True)
+            return Response({
+                "status": True,
+                "message": "All inquiries fetched successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        """
+        Delete a specific inquiry by its ID.
+        
+        Parameters:
+        - inquiry_id: ID of the inquiry to delete
+        
+        Returns:
+        - Success: Inquiry deleted successfully
+        - Error: Inquiry not found
+        """
+        inquiry = get_object_or_404(Inquiry, id=pk)
+        inquiry.delete()
+        return Response({
+            "status": True,
+            "message": "Inquiry deleted successfully"
+        }, status=status.HTTP_204_NO_CONTENT)
+        
+  
+    

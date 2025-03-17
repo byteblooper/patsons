@@ -3,58 +3,74 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInquiry } from "../context/InquiryContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { products as localProducts } from "../data/products";
+import BaseUrl from "../data/ApiUrl";
 
 function ProductDetails() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { addToInquiry, removeFromInquiry, isInInquiry } = useInquiry();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const inInquiry = product ? isInInquiry(product.id) : false;
 
   // Function to ensure image URL is absolute
   const getFullImageUrl = (imageUrl) => {
     if (!imageUrl) return "/placeholder.svg";
     if (imageUrl.startsWith("http")) return imageUrl;
-    return `https://patsons.pythonanywhere.com${imageUrl}`;
+    return `${BaseUrl}${imageUrl}`;
   };
 
   useEffect(() => {
-    // API endpoint for future reference:
-    // const fetchProduct = async () => {
-    //   try {
-    //     const response = await fetch(`https://patsons.pythonanywhere.com/api/products/${id}/`);
-    //     if (!response.ok) {
-    //       throw new Error(`Failed to fetch product data: ${response.statusText}`);
-    //     }
-    //     const data = await response.json();
-    //     if (data.status === "success") {
-    //       setProduct(data.product);
-    //     }
-    //   } catch (error) {
-    //     console.error("Error fetching product:", error);
-    //   }
-    // };
+    const loadProduct = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(`${BaseUrl}/api/products/${id}/`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch product data');
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'success' && data.product) {
+          const processedProduct = {
+            ...data.product,
+            mainImage: getFullImageUrl(data.product.image),
+            images: (data.product.images || []).map(img => ({
+              ...img,
+              image: getFullImageUrl(img.image)
+            }))
+          };
+          setProduct(processedProduct);
+        } else {
+          throw new Error(data.message || 'Failed to load product');
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to load product');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Using local data
-    const foundProduct = localProducts.find(p => p.id === id);
-    if (foundProduct) {
-      const processedProduct = {
-        ...foundProduct,
-        mainImage: getFullImageUrl(foundProduct.images?.[0]?.image),
-        images: (foundProduct.images || []).map(img => ({
-          ...img,
-          image: getFullImageUrl(img.image)
-        }))
-      };
-      setProduct(processedProduct);
+    if (id) {
+      loadProduct();
     }
   }, [id]);
 
-  if (!product) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-xl text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-xl text-red-600">{error || 'Product not found'}</p>
       </div>
     );
   }
@@ -63,7 +79,12 @@ function ProductDetails() {
     if (inInquiry) {
       removeFromInquiry(product.id);
     } else {
-      addToInquiry(product);
+      // Add the mainImage as image property before adding to inquiry
+      const productWithImage = {
+        ...product,
+        image: product.mainImage
+      };
+      addToInquiry(productWithImage);
     }
   };
 
@@ -89,7 +110,6 @@ function ProductDetails() {
   };
 
   const currentImage = getCurrentImageUrl();
-  console.log("Current Image URL:", currentImage);
 
   return (
     <section className="py-12 sm:py-16 max-w-7xl mx-auto">
@@ -208,7 +228,7 @@ function ProductDetails() {
           >
             {/* Product Title */}
             <h1 className="text-3xl font-bold text-gray-900">
-              Mens Wool Sweater
+              {product.style_number}
             </h1>
 
             {/* Specifications */}
@@ -220,17 +240,32 @@ function ProductDetails() {
                   <p className="font-medium">{product.style_number}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Factory Code</p>
-                  <p className="font-medium">{product.style_number}</p>
+                  <p className="text-gray-600">Gauge</p>
+                  <p className="font-medium">{product.gauge}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">End</p>
+                  <p className="font-medium">{product.end}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Weight</p>
-                  <p className="font-medium">{product.weight || 'L'}</p>
+                  <p className="font-medium">{product.weight}</p>
                 </div>
-                <div>
-                  <p className="text-gray-600">Sample Type</p>
-                  <p className="font-medium">Production</p>
-                </div>
+              </div>
+            </div>
+
+            {/* Composition */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Composition</h2>
+              <div className="flex flex-wrap gap-2">
+                {product.composition?.map((comp) => (
+                  <span
+                    key={comp.id}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                  >
+                    {comp.material}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -244,9 +279,6 @@ function ProductDetails() {
               </svg>
               {inInquiry ? 'Remove from Basket' : 'Add to Basket'}
             </button>
-
-            {/* Shipping and Payment Info */}
-           
           </motion.div>
         </div>
 

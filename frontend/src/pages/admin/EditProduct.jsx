@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchSubcategories, fetchCompositions, getCookie } from '../../data/adminApi';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import BaseUrl from '../../data/ApiUrl';
+
+
 
 function EditProduct() {
   const navigate = useNavigate();
@@ -34,13 +37,18 @@ function EditProduct() {
       
       try {
         setLoading(true);
+        const token = localStorage.getItem('access_token');
+        const headers = {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        };
+
         const [subcategoriesData, compositionsData, productResponse] = await Promise.all([
           fetchSubcategories(categoryId),
           fetchCompositions(),
-          fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-            },
+          fetch(`${BaseUrl}/api/admin/products/${productId}/`, {
+            headers,
+            credentials: 'include'
           })
         ]);
 
@@ -51,9 +59,15 @@ function EditProduct() {
         const productData = await productResponse.json();
         
         setSubcategories(subcategoriesData);
-        setCompositions(compositionsData?.compositions || []);
         
-        // Set product data
+        // Fix compositions data handling - extract compositions from response data
+        const compositionsArray = compositionsData?.data || [];
+        setCompositions(compositionsArray);
+        
+        // Get composition IDs directly from raw product data
+        const selectedCompositionIds = productData.composition || [];
+        
+        // Set product data with composition IDs and subcategory
         setProductData({
           style_number: productData.style_number || '',
           gauge: productData.gauge || '',
@@ -61,25 +75,24 @@ function EditProduct() {
           weight: productData.weight || '',
           description: productData.description || '',
           category: categoryId,
-          sub_category: productData.sub_category?.id || '',
-          composition: productData.composition?.map(c => c.id) || [],
+          sub_category: productData.sub_category || '',
+          composition: selectedCompositionIds,
           image: null,
           images: []
         });
 
         // Set image previews if available
         if (productData.image) {
-          setMainImagePreview(`http://127.0.0.1:8000${productData.image}`);
+          setMainImagePreview(`${BaseUrl}${productData.image}`);
         }
         if (productData.images?.length > 0) {
           setAdditionalImagePreviews(
-            productData.images.map(img => `http://127.0.0.1:8000${img.image}`)
+            productData.images.map(img => `${BaseUrl}${img.image}`)
           );
         }
 
-      } catch (err) {
+      } catch {
         setError('Failed to load product data');
-        console.error('Load data error:', err);
       } finally {
         setLoading(false);
       }
@@ -129,7 +142,7 @@ function EditProduct() {
       }
 
       // Send update request
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
+      const response = await fetch(`${BaseUrl}/api/admin/products/${productId}/`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -145,7 +158,6 @@ function EditProduct() {
         throw new Error(data.detail || data.error || 'Failed to update product');
       }
 
-      console.log('Product updated successfully:', data);
       navigate(`/admin/category/${categoryId}/products`);
     } catch (err) {
       console.error('Error updating product:', err);
@@ -157,7 +169,7 @@ function EditProduct() {
 
   // Handlers for form inputs
   const handleCompositionChange = (e) => {
-    const selectedValues = Array.from(e.target.selectedOptions, option => option.value);
+    const selectedValues = Array.from(e.target.selectedOptions, option => option.value.toString());
     setProductData(prev => ({
       ...prev,
       composition: selectedValues
@@ -255,11 +267,19 @@ function EditProduct() {
                 required
               >
                 <option value="">Select Subcategory</option>
-                {subcategories.map(sub => (
-                  <option key={sub.id} value={sub.id}>
-                    {sub.name}
-                  </option>
-                ))}
+                {Array.isArray(subcategories) && subcategories.length > 0 ? (
+                  subcategories.map(sub => (
+                    <option 
+                      key={sub.id} 
+                      value={sub.id}
+                      className={productData.sub_category === sub.id ? "bg-blue-100" : ""}
+                    >
+                      {sub.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>No subcategories available</option>
+                )}
               </select>
             </div>
 
@@ -272,14 +292,20 @@ function EditProduct() {
                 value={productData.composition}
                 onChange={handleCompositionChange}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                size="3"
+                size="5"
                 required
               >
-                {compositions.map(comp => (
-                  <option key={comp.id} value={comp.id}>
-                    {comp.material}
+                {Array.isArray(compositions) && compositions.length > 0 ? compositions.map(comp => (
+                  <option 
+                    key={comp.id} 
+                    value={comp.id}
+                    className={productData.composition?.includes(comp.id) ? "bg-blue-100" : ""}
+                  >
+                    {comp.name || comp.material}
                   </option>
-                ))}
+                )) : (
+                  <option value="" disabled>No compositions available</option>
+                )}
               </select>
               <p className="text-sm text-gray-500 mt-1">
                 Hold Ctrl/Cmd to select multiple compositions

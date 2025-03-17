@@ -1,4 +1,6 @@
 import { getValidToken, handleUnauthorizedResponse } from '../utils/auth';
+import BaseUrl from './ApiUrl';
+
 
 export function getCookie(name) {
   let cookieValue = null;
@@ -32,7 +34,7 @@ export const fetchCategories = async () => {
     const headers = getAuthHeaders();
     if (!headers) return;
 
-    const response = await fetch('http://127.0.0.1:8000/api/admin/categories/', {
+    const response = await fetch(`${BaseUrl}/api/admin/categories/`, {
       headers,
       credentials: 'include',
     });
@@ -52,7 +54,7 @@ export const fetchCategories = async () => {
 
 export const createCategory = async (formData) => {
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/admin/categories/', {
+    const response = await fetch(`${BaseUrl}/api/admin/categories/`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -95,7 +97,7 @@ export const updateCategory = async (categoryId, data) => {
       data = JSON.stringify(data);
     }
 
-    const response = await fetch(`http://127.0.0.1:8000/api/admin/categories/${categoryId}/`, {
+    const response = await fetch(`${BaseUrl}/api/admin/categories/${categoryId}/`, {
       method: 'PUT',
       headers: headers,
       credentials: 'include',
@@ -115,7 +117,7 @@ export const updateCategory = async (categoryId, data) => {
 
 export const deleteCategory = async (categoryId) => {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/admin/categories/${categoryId}/`, {
+    const response = await fetch(`${BaseUrl}/api/admin/categories/${categoryId}/`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
       credentials: 'include',
@@ -133,7 +135,7 @@ export const deleteCategory = async (categoryId) => {
 
 export const fetchCategoryProducts = async (categoryId) => {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/admin/categorised-products/${categoryId}/`, {
+    const response = await fetch(`${BaseUrl}/api/admin/categorised-products/${categoryId}/`, {
       method: 'GET',
       headers: getAuthHeaders(),
       credentials: 'include'
@@ -175,7 +177,7 @@ export const createProduct = async (data) => {
       data = JSON.stringify(data);
     }
 
-    const response = await fetch('http://127.0.0.1:8000/api/admin/products/', {
+    const response = await fetch(`${BaseUrl}/api/admin/products/`, {
       method: 'POST',
       headers: headers,
       credentials: 'include',
@@ -213,7 +215,7 @@ export const updateProduct = async (productId, productData) => {
       }
     });
 
-    const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
+    const response = await fetch(`${BaseUrl}/api/admin/products/${productId}/`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -237,7 +239,7 @@ export const updateProduct = async (productId, productData) => {
 
 export const deleteProduct = async (productId) => {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/admin/products/${productId}/`, {
+    const response = await fetch(`${BaseUrl}/api/admin/products/${productId}/`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -263,7 +265,7 @@ export const fetchSubcategories = async (categoryId) => {
   }
 
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/admin/subcategories/${categoryId}/`, {
+    const response = await fetch(`${BaseUrl}/api/admin/subcategories/${categoryId}/`, {
       headers: getAuthHeaders(),
       credentials: 'include',
     });
@@ -282,7 +284,7 @@ export const fetchSubcategories = async (categoryId) => {
 
 export const fetchCompositions = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/compositions/', {
+    const response = await fetch(`${BaseUrl}/api/admin/compositions/`, {
       headers: getAuthHeaders(),
       credentials: 'include',
     });
@@ -296,7 +298,7 @@ export const fetchCompositions = async () => {
 
 export const createComposition = async (data) => {
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/admin/compositions/', {
+    const response = await fetch(`${BaseUrl}/api/admin/compositions/`, {
       method: 'POST',
       headers: {
         ...getAuthHeaders(),
@@ -315,7 +317,7 @@ export const createComposition = async (data) => {
 
 export const updateComposition = async (id, data) => {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/admin/compositions/${id}/`, {
+    const response = await fetch(`${BaseUrl}/api/admin/compositions/${id}/`, {
       method: 'PUT',
       headers: {
         ...getAuthHeaders(),
@@ -334,7 +336,7 @@ export const updateComposition = async (id, data) => {
 
 export const deleteComposition = async (id) => {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/admin/compositions/${id}/`, {
+    const response = await fetch(`${BaseUrl}/api/admin/compositions/${id}/`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
       credentials: 'include',
@@ -343,6 +345,189 @@ export const deleteComposition = async (id) => {
     return true;
   } catch (error) {
     console.error('Error deleting composition:', error);
+    throw error;
+  }
+};
+
+export const submitInquiry = async (inquiryData) => {
+  try {
+    const response = await fetch(`${BaseUrl}/api/Inquiry/`, {
+
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: inquiryData.fullName,
+        email: inquiryData.email,
+        subject: inquiryData.subject,
+        message: inquiryData.message,
+        items: inquiryData.products.map(product => product.id)
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || data.message || 'Failed to submit inquiry');
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error submitting inquiry:', error);
+    throw error;
+  }
+};
+
+export const submitContactForm = async (contactData) => {
+  try {
+    const response = await fetch(`${BaseUrl}/api/contact-us/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: contactData.name,
+        email: contactData.email,
+        subject: contactData.subject,
+        message: contactData.message
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (data.errors) {
+        throw new Error(Object.values(data.errors).flat().join(', '));
+      }
+      throw new Error(data.message || 'Failed to submit contact form');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error submitting contact form:', error);
+    throw error;
+  }
+};
+
+export const fetchInquiries = async () => {
+  try {
+    const headers = getAuthHeaders();
+    if (!headers) return [];
+
+    const response = await fetch('http://127.0.0.1:8000/api/admin/Inquiry/', {
+      headers,
+      credentials: 'include',
+    });
+    
+    if (response.status === 401) {
+      handleUnauthorizedResponse({ response });
+      return [];
+    }
+    
+    if (!response.ok) throw new Error('Failed to fetch inquiries');
+    
+    const responseData = await response.json();
+    console.log('Inquiries response:', responseData); // Debug log
+    
+    // Return the data array from the response
+    return responseData.data || [];
+  } catch (error) {
+    console.error('Error fetching inquiries:', error);
+    return [];
+  }
+};
+
+export const fetchInquiryDetails = async (inquiryId) => {
+  try {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/Inquiry/${inquiryId}/`, {
+      headers,
+      credentials: 'include',
+    });
+    
+    if (response.status === 401) {
+      handleUnauthorizedResponse({ response });
+      return;
+    }
+    
+    if (!response.ok) throw new Error('Failed to fetch inquiry details');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching inquiry details:', error);
+    throw error;
+  }
+};
+
+export const deleteInquiry = async (inquiryId) => {
+  try {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/Inquiry/${inquiryId}/`, {
+      method: 'DELETE',
+      headers,
+      credentials: 'include',
+    });
+    
+    if (response.status === 401) {
+      handleUnauthorizedResponse({ response });
+      return;
+    }
+    
+    if (!response.ok) throw new Error('Failed to delete inquiry');
+    return true;
+  } catch (error) {
+    console.error('Error deleting inquiry:', error);
+    throw error;
+  }
+};
+
+export const fetchMessages = async () => {
+  try {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const response = await fetch('http://127.0.0.1:8000/api/admin/contact-us/', {
+      headers,
+      credentials: 'include',
+    });
+    
+    if (response.status === 401) {
+      handleUnauthorizedResponse({ response });
+      return;
+    }
+    
+    if (!response.ok) throw new Error('Failed to fetch messages');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    throw error;
+  }
+};
+
+export const deleteMessage = async (messageId) => {
+  try {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/messages/${messageId}/`, {
+      method: 'DELETE',
+      headers,
+      credentials: 'include',
+    });
+    
+    if (response.status === 401) {
+      handleUnauthorizedResponse({ response });
+      return;
+    }
+    
+    if (!response.ok) throw new Error('Failed to delete message');
+    return true;
+  } catch (error) {
+    console.error('Error deleting message:', error);
     throw error;
   }
 };
