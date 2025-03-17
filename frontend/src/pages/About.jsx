@@ -166,8 +166,7 @@ function About() {
                     </p>
                   </div>
 
-                  {/* Hover Effect Line */}
-                  <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-sky-500 to-indigo-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                 
                 </div>
               </motion.div>
             ))}
