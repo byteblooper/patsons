@@ -183,40 +183,44 @@ function ProductDetails() {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="relative flex-grow"
+              className="relative flex-grow aspect-[3/4]"
             >
-              <div className="aspect-square w-full rounded-lg overflow-hidden bg-gray-100">
-                <motion.img
-                  key={currentImage}
+              <div className="w-full h-full rounded-lg overflow-hidden bg-white">
+                <motion.div
+                  className="w-full h-full flex items-center justify-center overflow-hidden"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
-                  src={currentImage}
-                  alt={product.description}
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    e.target.src = "/placeholder.svg";
-                  }}
-                />
+                >
+                  <motion.img
+                    key={currentImage}
+                    src={currentImage}
+                    alt={product.description}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "/placeholder.svg";
+                    }}
+                  />
+                </motion.div>
+
+                {/* Navigation Arrows */}
+                {product.images.length > 0 && (
+                  <>
+                    <button
+                      onClick={previousImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow-lg backdrop-blur-sm"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow-lg backdrop-blur-sm"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  </>
+                )}
               </div>
-              
-              {/* Navigation Arrows */}
-              {product.images.length > 0 && (
-                <>
-                  <button
-                    onClick={previousImage}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow-lg"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <button
-                    onClick={nextImage}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white shadow-lg"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                </>
-              )}
             </motion.div>
           </div>
 

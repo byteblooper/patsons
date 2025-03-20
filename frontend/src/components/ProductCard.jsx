@@ -1,67 +1,47 @@
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { useInquiry } from '../context/InquiryContext';
 
 function ProductCard({ product }) {
-  const { addToInquiry, removeFromInquiry, isInInquiry } = useInquiry();
-  const inInquiry = isInInquiry(product.id);
-
-  const handleInquiryClick = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (inInquiry) {
-      removeFromInquiry(product.id);
-    } else {
-      addToInquiry(product);
-    }
-  };
-
   return (
-    <Link to={`/products/${product.id}`}>
-      <motion.div
-        whileHover={{ y: -5 }}
-        className="bg-white rounded-lg overflow-hidden shadow-lg group h-[400px] flex flex-col"
-      >
-        {/* Image Container with Fixed Dimensions */}
-        <div className="relative w-full h-[320px] bg-gray-100 overflow-hidden">
-          <div className="w-full h-full">
-            <img
-              src={product.image || "/placeholder.svg"}
-              alt={product.style_number}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.src = "/placeholder.svg";
-                e.target.onerror = null;
-              }}
-            />
-          </div>
-          
-          {/* Style number overlay - visible on hover */}
-          <div className="absolute inset-0 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="bg-gradient-to-t from-black/70 to-transparent pb-5 pt-10">
-              <div className="text-center">
-                <h3 className="text-white text-lg font-medium px-2">
-                  {product.style_number}
-                </h3>
-              </div>
-            </div>
-          </div>
+    <Link to={`/products/${product.id}`} className="block group perspective">
+      <div className="relative aspect-[3/4] bg-white transform-gpu transition-transform duration-500 ease-out group-hover:scale-[1.02] group-hover:shadow-xl">
+        {/* Main Image Container with fixed aspect ratio */}
+        <div className="w-full h-full flex items-center justify-center overflow-hidden">
+          <img
+            src={product.image || "/placeholder.svg"}
+            alt={product.style_number}
+            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            onError={(e) => {
+              e.target.src = "/placeholder.svg";
+              e.target.onerror = null;
+            }}
+          />
         </div>
 
-        {/* Add to Inquiry Button Section - Fixed Height */}
-        <div className="bg-white p-4 flex-grow flex items-center">
-          <button
-            onClick={handleInquiryClick}
-            className={`w-full px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-              inInquiry 
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-gray-900 text-white hover:bg-gray-800'
-            }`}
-          >
-            {inInquiry ? 'Remove from Inquiry' : 'Add to Inquiry'}
-          </button>
+        {/* Text Overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/50 to-transparent">
+          <h3 className="text-3xl font-serif mb-4 text-white drop-shadow-lg">
+            {product.style_number}
+          </h3>
+          <div className="inline-flex items-center bg-white/20 backdrop-blur-sm border border-white/40 rounded-full px-4 py-2 hover:bg-white/30 transition-all duration-300">
+            <span className="text-sm font-medium tracking-[0.2em] uppercase text-white drop-shadow">
+              Discover Now
+            </span>
+            <svg 
+              className="w-4 h-4 ml-2 text-white" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={1.5} 
+                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" 
+              />
+            </svg>
+          </div>
         </div>
-      </motion.div>
+      </div>
     </Link>
   );
 }

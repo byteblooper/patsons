@@ -9,9 +9,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from .serializers import LoginSerializer
 from django.contrib.auth import authenticate
-import logging
-
-logger = logging.getLogger(__name__)
 
 class LoginView(APIView):
     """
@@ -49,7 +46,6 @@ class LoginView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
             
         except Exception as e:
-            logger.error(f"Login error: {str(e)}")
             return Response({
                 'status': 'error',
                 'code': status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -84,7 +80,6 @@ class LogoutView(APIView):
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            logger.error(f"Logout error: {str(e)}")
             return Response({
                 'status': 'error',
                 'code': status.HTTP_500_INTERNAL_SERVER_ERROR,
