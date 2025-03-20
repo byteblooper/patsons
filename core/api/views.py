@@ -216,7 +216,15 @@ class InquiryView(APIView):
         if serializer.is_valid():
             # Save the inquiry
             inquiry = serializer.save()
+            
+            # Send email notification
+            email_sent = EmailService.send_inquiry_email(inquiry)
+            
             response_data = InquirySerializer(inquiry).data
+            
+            if not email_sent:
+                response_data['warning'] = 'Inquiry created but notification email failed'
+            
             return Response({
                 "status": True,
                 "message": "Inquiry created successfully",
