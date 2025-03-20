@@ -135,7 +135,7 @@ function Navbar() {
 
             {/* Logo */}
             <Link to="/" className="flex items-center pl-8">
-              <img src="/public/logo-light.svg" alt="Patson's Logo" className="h-12" />
+              <img src="/logo-light.svg" alt="Patson's Logo" className="h-12" />
             </Link>
 
 
