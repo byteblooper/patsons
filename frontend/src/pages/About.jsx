@@ -1,5 +1,15 @@
 import { motion } from 'framer-motion';
-import { CheckCircleIcon } from '@heroicons/react/24/outline';
+import { 
+  CheckCircleIcon, 
+  ShieldCheckIcon, 
+  GlobeAltIcon, 
+  UserGroupIcon, 
+  BuildingOffice2Icon, 
+  MapPinIcon,
+  ChartBarIcon,
+  UsersIcon,
+  TrophyIcon
+} from '@heroicons/react/24/outline';
 
 function About() {
   const fadeIn = {
@@ -9,124 +19,250 @@ function About() {
   };
 
   const clients = [
-    { name: 'New Look (UK & Germany)' },
-    { name: 'Peacocks (UK)' },
-    { name: 'JD Williams (UK)' },
-    { name: 'Missguided (UK)' },
-    { name: 'Suzy Shier (Canada)' },
-    { name: 'Gate sa (Slovakia)' }
+    { name: 'New Look', region: 'UK & Germany' },
+    { name: 'Peacocks', region: 'UK' },
+    { name: 'JD Williams', region: 'UK' },
+    { name: 'Missguided', region: 'UK' },
+    { name: 'Suzy Shier', region: 'Canada' },
+    { name: 'Gate sa', region: 'Slovakia' }
   ];
 
   const features = [
     {
       title: 'Sourcing the Best Quality Apparel',
-      description: 'We prioritize sourcing the finest fabrics and garments, ensuring an exceptional experience for our customers.',
-      icon: ''
+      description: 'Our main concern is to source the finest quality fabric to ensure our customers the ultimate satisfying experience.',
+      icon: <ShieldCheckIcon className="w-8 h-8 text-sky-600" />,
+      stats: '100%',
+      statsLabel: 'Quality Focus'
     },
     {
       title: 'Most Competitive Pricing',
-      description: 'Affordability and value go hand-in-hand, and we pride ourselves on offering the most competitive prices in the industry.',
-      icon: ''
+      description: 'We always consider affordability to create a unique experience for our customers. We believe in the most competitive pricing.',
+      icon: <GlobeAltIcon className="w-8 h-8 text-sky-600" />,
+      stats: 'Best',
+      statsLabel: 'Value'
     },
     {
       title: 'Professional Working Environment',
-      description: 'Our professional and ethical approach to sourcing sets us apart, fostering trust and long-term partnerships.',
-      icon: ''
+      description: 'Studio Patsons is excelling in the sourcing trade and the professional working environment is one of our many core values.',
+      icon: <UserGroupIcon className="w-8 h-8 text-sky-600" />,
+      stats: '7+',
+      statsLabel: 'Years Experience'
     }
   ];
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <div className="relative h-[60vh] bg-black flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0">
+      {/* Hero Section - Enhanced */}
+      <div className="relative h-[80vh] bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-sky-600/20 to-indigo-600/20" />
           <img
-            src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1920&auto=format&fit=crop"
+            src="https://images.unsplash.com/photo-1732257119998-b66cda63dcfc?q=80&w=1930&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop"
             alt="Clothing Rack"
-            className="w-full h-full object-cover opacity-50"
+            className="w-full h-full object-cover opacity-30"
           />
         </div>
-        <div className="relative text-center text-white z-10 max-w-4xl mx-auto px-4">
-          <motion.h1 
-            className="text-5xl md:text-7xl font-bold mb-6"
-            {...fadeIn}
-          >
-            We Are a Lifestyle Brand
-          </motion.h1>
-          <motion.p 
-            className="text-xl md:text-2xl"
-            initial={{ opacity: 0, y: 20 }}
+        <div className="relative z-10 max-w-7xl mx-auto px-4">
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
+            transition={{ duration: 0.8 }}
           >
-            Studio Patsons Limited is a Buying agent of ready-made garments in Bangladesh.
-          </motion.p>
+            <motion.span 
+              className="inline-block px-4 py-1 rounded-full bg-sky-600/20 text-sky-300 text-sm font-medium mb-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              Welcome to Studio Patsons Limited
+            </motion.span>
+            <motion.h1 
+              className="text-5xl md:text-7xl font-bold mb-8 text-white leading-tight"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              Crafting Excellence in<br />Global Fashion
+            </motion.h1>
+            <motion.p 
+              className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              Your trusted partner in premium apparel sourcing, delivering innovation and quality since 2016.
+            </motion.p>
+          </motion.div>
         </div>
       </div>
 
-      {/* About Section */}
-      <div className="max-w-7xl mx-auto px-4 py-16">
-        <motion.div 
-          className="prose prose-lg mx-auto text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-        >
-          <p className="text-gray-600 text-lg leading-relaxed">
-            Studio Patsons Limited is a Buying agent of ready-made garments in Bangladesh. Studio Patsons specializes in Sweater and Denim products. Through good communication, excellent working relationships and responding to our customers' needs, we have developed a unique, effective, reliable and professional operating structure and sourcing concept that ensures we retain our position in the UK, Canada, Germany, Slovakia market.
-          </p>
-        </motion.div>
-      </div>
-
-      {/* Mission Section */}
-      <div className="bg-gray-50 py-16">
+      {/* Quick Stats Section - New */}
+      <div className="bg-white py-12 -mt-20 relative z-20">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
+          <div className="bg-white rounded-2xl shadow-xl p-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+            <motion.div 
+              className="text-center"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
               viewport={{ once: true }}
             >
-              <img
-                src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=800&auto=format&fit=crop"
-                alt="Fashion Items"
-                className="rounded-lg shadow-xl"
-              />
+              <ChartBarIcon className="w-8 h-8 text-sky-600 mx-auto mb-4" />
+              <p className="text-3xl font-bold text-gray-900 mb-2">7+</p>
+              <p className="text-sm text-gray-600">Years of Excellence</p>
             </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
+            <motion.div 
+              className="text-center"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-4xl font-bold mb-6">Our Mission</h2>
-              <p className="text-gray-600 text-lg leading-relaxed">
-                We satisfy our buyers as well as other regulatory requirements ensuring to provide quality service and products. To meet the goal, we are committed to put the best endeavors and work as a team efficiently for continual improvement of the quality management system.
-              </p>
+              <UsersIcon className="w-8 h-8 text-sky-600 mx-auto mb-4" />
+              <p className="text-3xl font-bold text-gray-900 mb-2">50+</p>
+              <p className="text-sm text-gray-600">Global Partners</p>
+            </motion.div>
+            <motion.div 
+              className="text-center"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <TrophyIcon className="w-8 h-8 text-sky-600 mx-auto mb-4" />
+              <p className="text-3xl font-bold text-gray-900 mb-2">100%</p>
+              <p className="text-sm text-gray-600">Quality Focus</p>
+            </motion.div>
+            <motion.div 
+              className="text-center"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <GlobeAltIcon className="w-8 h-8 text-sky-600 mx-auto mb-4" />
+              <p className="text-3xl font-bold text-gray-900 mb-2">4+</p>
+              <p className="text-sm text-gray-600">Countries Served</p>
             </motion.div>
           </div>
         </div>
       </div>
 
-      {/* Features Section */}
-      <div className="py-24 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
-        {/* Background Elements */}
+      {/* Mission & Vision Section - Enhanced */}
+      <div className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-16">
+            {/* Mission Section */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <div className="inline-flex items-center space-x-2 bg-sky-50 rounded-full px-4 py-1">
+                <span className="w-2 h-2 rounded-full bg-sky-600"></span>
+                <span className="text-sky-600 font-medium text-sm">Our Mission</span>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 leading-tight">
+                Total Customer Satisfaction Through Quality & Value
+              </h2>
+              <p className="text-gray-600 leading-relaxed">
+                Our mission is to provide total customer satisfaction by offering a range of quality garments at reasonable prices. 
+                We satisfy our buyers as well as other regulatory requirements ensuring to provide quality service and products.
+              </p>
+              <div className="pt-4 space-y-4">
+                {[
+                  'Quality-focused approach',
+                  'Competitive pricing strategy',
+                  'Professional service delivery'
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+                    <CheckCircleIcon className="w-5 h-5 text-sky-600 flex-shrink-0" />
+                    <span className="text-gray-700">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Vision Section */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <div className="inline-flex items-center space-x-2 bg-indigo-50 rounded-full px-4 py-1">
+                <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+                <span className="text-indigo-600 font-medium text-sm">Our Vision</span>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 leading-tight">
+                Leading the Future of Apparel Sourcing
+              </h2>
+              <p className="text-gray-600 leading-relaxed">
+                Studio Patsons is a fast-growing apparel R&D, merchandising & sourcing company from Bangladesh. 
+                Throughout the years, we have established ourselves as a core manufacture partner for fashion brands in Europe and U.S.A.
+              </p>
+              <div className="grid grid-cols-2 gap-6 pt-4">
+                <div className="bg-gradient-to-br from-sky-50 to-indigo-50 p-6 rounded-xl">
+                  <p className="text-3xl font-bold text-sky-600">7+</p>
+                  <p className="text-sm text-gray-600 mt-1">Years Experience</p>
+                </div>
+                <div className="bg-gradient-to-br from-sky-50 to-indigo-50 p-6 rounded-xl">
+                  <p className="text-3xl font-bold text-indigo-600">100%</p>
+                  <p className="text-sm text-gray-600 mt-1">Customer Focus</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      {/* Services Overview - Enhanced */}
+      <div className="bg-gradient-to-b from-gray-50 to-white py-20">
+        <div className="max-w-7xl mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="max-w-3xl mx-auto text-center"
+          >
+            <span className="inline-block px-4 py-1 rounded-full bg-sky-50 text-sky-600 text-sm font-medium mb-6">
+              Our Services
+            </span>
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">
+              Comprehensive Sourcing Solutions
+            </h2>
+            <p className="text-gray-600 text-lg leading-relaxed">
+              Our services include all that a buyer needs for successful buying. With seven years of experience in dealing with all categories of garments, 
+              we aim to be your trusted partner in the garments industry.
+            </p>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Why Choose Us Section */}
+      <div className="py-24 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+        {/* Background Design Elements */}
         <div className="absolute inset-0 opacity-[0.03]">
-          <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-sky-600 rounded-full -translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-indigo-600 rounded-full translate-x-1/2 translate-y-1/2" />
+          <div className="absolute top-0 left-0 w-96 h-96 bg-sky-600 rounded-full -translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-600 rounded-full translate-x-1/2 translate-y-1/2" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 relative">
           <motion.div 
-            className="text-center mb-20"
+            className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <span className="text-sky-600 font-medium tracking-wider text-sm uppercase mb-4 block">Our Strengths</span>
-            <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-sky-800 to-gray-900 bg-clip-text text-transparent">
+            <span className="text-sky-600 font-medium tracking-wider text-sm uppercase mb-4 block">Why Choose Us</span>
+            <h2 className="text-4xl font-bold mb-6 text-gray-900">
               Why Choose Studio Patsons?
             </h2>
             <div className="w-24 h-1 bg-sky-600 mx-auto mb-6"></div>
@@ -139,34 +275,44 @@ function About() {
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                className="group relative"
+                className="group"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.2, duration: 0.6 }}
                 viewport={{ once: true }}
               >
-                <div className="bg-white rounded-2xl p-8 shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 relative overflow-hidden border border-gray-100 h-full">
-                  {/* Accent Corner */}
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-sky-500/20 to-indigo-500/20 rounded-bl-[100px] transition-transform duration-300 group-hover:scale-125" />
-                  
-                  {/* Icon Container */}
-                  <div className="relative mb-6">
-                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-sky-100 to-indigo-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <span className="text-3xl">{feature.icon}</span>
-                    </div>
+                <div className="bg-white rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden border border-gray-100 h-full">
+                  {/* Feature Number */}
+                  <div className="absolute top-6 right-6 text-4xl font-bold text-gray-100">
+                    0{index + 1}
                   </div>
 
-                  {/* Content */}
+                  {/* Icon and Content */}
                   <div className="relative">
-                    <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-sky-900 to-indigo-900 bg-clip-text text-transparent">
+                    <div className="mb-6">
+                      <div className="w-14 h-14 rounded-lg bg-sky-50 flex items-center justify-center group-hover:bg-sky-100 transition-colors duration-300">
+                        {feature.icon}
+                      </div>
+                    </div>
+
+                    <h3 className="text-xl font-bold mb-4 text-gray-900">
                       {feature.title}
                     </h3>
                     <p className="text-gray-600 leading-relaxed">
                       {feature.description}
                     </p>
+
+                    {/* Feature Highlight */}
+                    <div className="mt-6 pt-6 border-t border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-500">{feature.statsLabel}</span>
+                        <span className="text-xl font-bold text-sky-600">{feature.stats}</span>
+                      </div>
+                    </div>
                   </div>
 
-                 
+                  {/* Decorative Corner */}
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-sky-500/10 to-indigo-500/10 rounded-bl-[100px] transition-transform duration-300 group-hover:scale-110" />
                 </div>
               </motion.div>
             ))}
@@ -208,54 +354,28 @@ function About() {
                 transition={{ delay: index * 0.1, duration: 0.6 }}
                 viewport={{ once: true }}
               >
-                <div className="bg-white rounded-2xl p-8 shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 relative overflow-hidden border border-gray-100">
-                  {/* Accent Corner */}
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-sky-500/20 to-indigo-500/20 rounded-bl-[100px] transition-transform duration-300 group-hover:scale-125" />
-                  
-                  {/* Logo Area */}
-                  <div className="relative mb-8">
-                    <div className="h-16 flex items-center justify-start">
-                      <span className="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                        {client.name.split(' ')[0]}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <CheckCircleIcon className="h-5 w-5 text-sky-600" />
-                      <span className="text-sm font-medium text-sky-600">Premium Partner</span>
-                    </div>
-                  </div>
-
-                  {/* Details */}
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-sky-50 flex items-center justify-center">
-                        <svg className="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Region</p>
-                        <p className="font-medium">{client.name.includes('UK') ? 'United Kingdom' : 
-                                                   client.name.includes('Germany') ? 'Germany' :
-                                                   client.name.includes('Canada') ? 'Canada' :
-                                                   client.name.includes('Slovakia') ? 'Slovakia' : 'Global'}</p>
+                <div className="bg-white rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden border border-gray-100">
+                  {/* Company Badge */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">
+                        {client.name}
+                      </h3>
+                      <div className="flex items-center mt-2">
+                        <CheckCircleIcon className="h-5 w-5 text-sky-600" />
+                        <span className="text-sm font-medium text-sky-600 ml-2">Verified Partner</span>
                       </div>
                     </div>
-
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-sky-50 flex items-center justify-center">
-                        <svg className="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Partnership Duration</p>
-                        <p className="font-medium">Since 2016</p>
-                      </div>
+                    <div className="bg-sky-50 p-3 rounded-full">
+                      <BuildingOffice2Icon className="w-6 h-6 text-sky-600" />
                     </div>
                   </div>
 
-                  
+                  {/* Region */}
+                  <div className="flex items-center text-gray-500 mt-4">
+                    <MapPinIcon className="w-5 h-5 mr-2" />
+                    <span className="text-sm font-medium text-gray-900">{client.region}</span>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -278,18 +398,22 @@ function About() {
         </div>
       </div>
 
-      {/* Footer Quote */}
-      <div className="py-16 text-center">
+      {/* Footer Quote - Enhanced */}
+      <div className="py-24 bg-gradient-to-b from-white to-gray-50">
         <div className="max-w-4xl mx-auto px-4">
-          <motion.p
-            className="text-xl text-gray-600 italic"
+          <motion.div
+            className="text-center space-y-6"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            With seven years of experience, Studio Patsons Limited stands as a fast-growing apparel R&D, merchandising, and sourcing company. We are more than a buying house; we are a strategic partner dedicated to delivering excellence in every stitch.
-          </motion.p>
+            <span className="inline-block w-20 h-1 bg-sky-600"></span>
+            <p className="text-2xl text-gray-600 italic font-light leading-relaxed">
+              "With seven years of experience, Studio Patsons Limited stands as a fast-growing apparel R&D, merchandising, and sourcing company. 
+              We are more than a buying house; we are a strategic partner dedicated to delivering excellence in every stitch."
+            </p>
+          </motion.div>
         </div>
       </div>
     </div>
