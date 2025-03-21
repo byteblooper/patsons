@@ -131,7 +131,7 @@ function Hero({ startAnimations }) {
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-black">
+    <div className="relative  h-screen w-full overflow-hidden bg-black">
       {/* Background Image */}
       <AnimatePresence initial={false}>
         <motion.div
@@ -157,7 +157,7 @@ function Hero({ startAnimations }) {
       {/* Content */}
       {showContent && (
         <>
-          <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+          <div className="absolute max-sm:bottom-32 inset-0 flex items-center justify-center overflow-hidden">
             <motion.div
               className="flex flex-col items-center"
               initial={{ opacity: 0, y: 50 }}
@@ -173,7 +173,7 @@ function Hero({ startAnimations }) {
               }}
             >
               <motion.div
-                className="flex flex-col items-center"
+                className="flex flex-col  items-center"
                 animate={{
                   backgroundPosition: ["0% center", "100% center"],
                 }}
@@ -192,19 +192,20 @@ function Hero({ startAnimations }) {
                   WebkitTextFillColor: "transparent",
                 }}
               >
-                <span className="text-[clamp(6rem,10vw,10rem)] font-bold leading-none tracking-tighter">
+                <span className="text-[clamp(4rem,18vw,10rem)] font-bold leading-none tracking-tighter">
                   Studio
                 </span>
-                <span className="text-[clamp(5rem,14vw,14rem)] font-bold leading-none tracking-tighter -mt-12">
+                <span className="text-[clamp(5rem,22vw,14rem)] font-bold leading-none tracking-tighter md:-mt-12">
                   Patsons
                 </span>
               </motion.div>
             </motion.div>
           </div>
 
-          <div className="absolute inset-0">
+          {/* Desktop-only Images */}
+          <div className="absolute inset-0 hidden md:block">
             <motion.div
-              className="absolute left-[7%] top-[30%] -translate-y-1/2 w-[min(200px,25vw)] h-[min(500px,37vh)]"
+              className="absolute left-[7%] top-[10%] -translate-y-1/2 w-[min(200px,25vw)] h-[min(500px,37vh)]"
               initial={{ x: "-100%", rotate: 0, opacity: 0 }}
               animate={leftImageAnimation}
               transition={{ duration: 1.2, ease: "easeOut", delay: startAnimations ? 0.7 : 0 }}
@@ -249,21 +250,22 @@ function Hero({ startAnimations }) {
             </motion.div>
           </div>
 
+          {/* Mobile and Desktop CTA */}
           <motion.div
-            className="absolute top-[72%] -translate-x-1/2 text-center w-full px-4"
+            className="absolute top-[60%] md:top-[72%] -translate-x-1/2 text-center w-full px-4"
             initial={{ opacity: 0, y: 20 }}
             animate={startAnimations ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 1, delay: startAnimations ? 1.2 : 0 }}
           >
-            <p className="text-lg md:text-2xl font-light text-gray-600">
+            <p className="text-lg md:text-2xl font-light text-gray-300">
               FASHION FASHION REDEFINED FASHION REDEFINED
             </p>
             <button
               onClick={() => navigate('/products')}
               className="group px-6 md:px-10 py-2 md:py-3 mt-4 text-base md:text-lg
                 bg-white/30 backdrop-blur-md
-                border border-black/40
-                text-black/80 font-medium tracking-wider
+                border border-white/40
+                text-white font-medium tracking-wider
                 rounded-full shadow-[0_8px_32px_rgba(255,255,255,0.3)]
                 hover:bg-white/40 hover:border-white/50
                 hover:shadow-[0_8px_40px_rgba(255,255,255,0.45)]
