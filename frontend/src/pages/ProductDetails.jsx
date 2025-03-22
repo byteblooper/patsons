@@ -257,6 +257,10 @@ function ProductDetails() {
                 </div>
               </div>
             </div>
+            <div className="py-6">
+            <h3 className="text-2xl font-bold mb-4">Product Details</h3>
+            <p className="text-gray-600">{product.description}</p>
+          </div>
 
             {/* Composition */}
             <div className="space-y-4">
@@ -287,17 +291,14 @@ function ProductDetails() {
         </div>
 
         {/* Description Tab */}
-        <div className="mt-12">
+        {/* <div className="mt-12">
           <div className="border-b border-gray-200">
             <button className="text-lg font-medium text-gray-900 pb-4 border-b-2 border-gray-900">
               Description
             </button>
           </div>
-          <div className="py-6">
-            <h3 className="text-xl font-bold mb-4">Product Details</h3>
-            <p className="text-gray-600">{product.description}</p>
-          </div>
-        </div>
+          
+        </div> */}
       </div>
     </section>
   );
