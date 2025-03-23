@@ -17,10 +17,12 @@ function Home() {
       try {
         // Preload hero section images
         const imageUrls = [
-          "https://img.freepik.com/free-photo/hand-painted-watercolor-background-with-sky-clouds-shape_24972-1095.jpg",
-          "https://img.freepik.com/premium-vector/blue-mandala-background_1278957-1113.jpg",
-          "https://img.freepik.com/free-photo/psychedelic-paper-shapes-with-copy-space_23-2149378246.jpg",
-          "https://img.freepik.com/premium-photo/geometric-shapes-wavy-curve-wavy-seamless-blank-empty-design-banner-abstract_941600-236052.jpg"
+          '/woman-sweater-in-hand.jpeg',
+          '/woman-in-man.jpeg',
+          '/rsz_chair.jpg',
+          '/girl-on-sweater.jpg',
+          '/boy-on-sweater.jpg',
+          '/kid1.jpeg'
         ];
 
         // Load all images concurrently

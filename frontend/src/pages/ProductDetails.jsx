@@ -257,6 +257,10 @@ function ProductDetails() {
                 </div>
               </div>
             </div>
+            <div className="py-6">
+            <h3 className="text-2xl font-bold mb-4">Product Details</h3>
+            <p className="text-gray-600">{product.description}</p>
+          </div>
 
             {/* Composition */}
             <div className="space-y-4">
@@ -276,10 +280,18 @@ function ProductDetails() {
             {/* Add to Basket Button */}
             <button
               onClick={handleInquiryClick}
-              className="w-full bg-gray-900 text-white py-3 px-4 rounded flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
+              className={`w-full py-3 px-4 rounded flex items-center justify-center gap-2 transition-all duration-300
+                ${inInquiry 
+                  ? 'bg-red-600 hover:bg-red-700 text-white' 
+                  : 'bg-gradient-to-r from-[#00A9FF] to-[#0077FF] hover:from-[#0077FF] hover:to-[#00A9FF] text-white'
+                } shadow-lg hover:shadow-xl`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                  d={inInquiry 
+                    ? "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
+                    : "M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"} 
+                />
               </svg>
               {inInquiry ? 'Remove from Basket' : 'Add to Basket'}
             </button>
@@ -287,17 +299,14 @@ function ProductDetails() {
         </div>
 
         {/* Description Tab */}
-        <div className="mt-12">
+        {/* <div className="mt-12">
           <div className="border-b border-gray-200">
             <button className="text-lg font-medium text-gray-900 pb-4 border-b-2 border-gray-900">
               Description
             </button>
           </div>
-          <div className="py-6">
-            <h3 className="text-xl font-bold mb-4">Product Details</h3>
-            <p className="text-gray-600">{product.description}</p>
-          </div>
-        </div>
+          
+        </div> */}
       </div>
     </section>
   );

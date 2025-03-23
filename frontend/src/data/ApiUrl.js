@@ -1,4 +1,4 @@
 
-const BaseUrl = "http://127.0.0.1:8000";
+const BaseUrl = "https://api.patsonsbd.com";
 
 export default BaseUrl;
