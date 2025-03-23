@@ -139,7 +139,7 @@ function CategorySection() {
                     block rounded-lg p-3 border transition-all bg-white
                     ${!activeMainCategory && !activeCategory ? "border-sky-500 bg-sky-50" : "border-gray-200"}`}
                 >
-                  <span className="font-medium">All Products</span>
+                  <span className="font-medium ">All Products</span>
                 </Link>
 
                 {categories.map((category) => (
@@ -221,8 +221,10 @@ function CategorySection() {
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
-                  <div className="w-full px-4 py-3 flex items-center justify-between backdrop-blur-sm absolute bottom-0 left-0 right-0">
-                    <span className="font-semibold text-gray-800">All Products</span>
+                  <div className="w-full px-4 py-3 flex items-center justify-between
+                        bg-white/90 backdrop-blur-sm hover:bg-white/95 transition-colors
+                        absolute bottom-0 left-0 right-0">
+                    <span className="font-semibold text-gray-800 ">All Products</span>
                   </div>
                 </div>
               </div>
