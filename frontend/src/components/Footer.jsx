@@ -8,11 +8,11 @@ function Footer() {
       { name: 'Products', path: '/products' },
     ],
     Legal: [
-      { name: 'Privacy Policy', path: '/privacy' },
-      { name: 'Terms of Service', path: '/terms' },
+      { name: 'Privacy Policy', path: '#' },
+      { name: 'Terms of Service', path: '#' },
     ],
     Support: [
-      { name: 'FAQ', path: '/faq' },
+      { name: 'FAQ', path: '#' },
       { name: 'Contact Support', path: '/contact' },
     ],
   };
@@ -80,10 +80,10 @@ function Footer() {
               Contact Us
             </h3>
             <div className="text-gray-500 space-y-2 text-sm">
-              <p>123 Business Street</p>
-              <p>Dhaka, Bangladesh</p>
+              <p>House # 143 (Ground Floor) Road # 04, New DOHS Mohakhali</p>
+              <p>Dhaka-1206 Bangladesh</p>
               <p>Email: info@patsons.com</p>
-              <p>Phone: +880 123-456-7890</p>
+              <p>Tel: +88 02 55 091 980</p>
             </div>
           </div>
         </div>

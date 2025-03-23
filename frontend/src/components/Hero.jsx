@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 const images = {
   left: "https://images.pexels.com/photos/19688483/pexels-photo-19688483/free-photo-of-young-boy-posing-during-winter.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-  right: "https://images.pexels.com/photos/10667859/pexels-photo-10667859.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+  right: "https://images.pexels.com/photos/2566927/pexels-photo-2566927.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
   top: "https://images.pexels.com/photos/30683718/pexels-photo-30683718/free-photo-of-playful-child-in-blue-hoody-and-winter-hat.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
   textBg: "https://img.freepik.com/free-photo/friends-spending-time-together_23-2149306141.jpg",
 };
