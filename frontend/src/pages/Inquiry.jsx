@@ -54,7 +54,7 @@ function Inquiry() {
           type: 'success'
         });
 
-        // Clear the inquiry cart
+        // Clear the inquiry bag
         clearInquiry();
         
         // Reset form
