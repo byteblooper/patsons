@@ -34,7 +34,7 @@ function InquiryModal({ isOpen, onClose }) {
           >
             <div className="p-4 border-b flex justify-between items-center">
               <h2 className="text-lg font-semibold">
-                Inquiry Cart ({inquiryItems.length})
+                Inquiry Bag ({inquiryItems.length})
               </h2>
               <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
                 <XMarkIcon className="h-6 w-6" />
@@ -43,7 +43,7 @@ function InquiryModal({ isOpen, onClose }) {
 
             <div className="max-h-96 overflow-y-auto p-4">
               {inquiryItems.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">Your inquiry cart is empty</p>
+                <p className="text-center text-gray-500 py-8">Your inquiry Bag is empty</p>
               ) : (
                 <div className="space-y-4">
                   {inquiryItems.map((item) => (
