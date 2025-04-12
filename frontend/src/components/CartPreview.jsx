@@ -32,7 +32,7 @@ function CartPreview({ isOpen, onClose }) {
     >
       <div className="p-4 border-b">
         <div className="flex justify-between items-center">
-          <h3 className="font-semibold">Inquiry Cart ({inquiryItems.length})</h3>
+          <h3 className="font-semibold">Inquiry Busket ({inquiryItems.length})</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
             <X className="w-5 h-5" />
           </button>

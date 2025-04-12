@@ -470,7 +470,7 @@ function Navbar() {
                 ) : searchQuery ? (
                   <div className="p-8 text-center text-gray-500">No products found</div>
                 ) : (
-                  <div className="p-8 text-center text-gray-500">Start typing to search products</div>
+                  <div className="p-8 text-center text-gray-500">Start typing to search products by style number</div>
                 )}
               </div>
             </div>
